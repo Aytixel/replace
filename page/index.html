@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="author" content="Aytixel">
+        <meta name="description" content="The concept, just the same as r/place">
+        <title>re/place</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+            :root {
+                --color1: #fff;
+                --color2: #1c1b1a;
+            }
+
+            * {
+                position: relative;
+                z-index: 0;
+
+                margin: 0;
+                padding: 0;
+            }
+
+            html {
+                height: 100%;
+            }
+
+            body {
+                height: 100%;
+
+                background-color: var(--color2);
+            
+                overflow: hidden;
+            }
+            
+            /*
+
+                Canvas
+
+            */
+            canvas {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+
+                height: 80vh;
+                width: 80vh;
+                
+                background-color: var(--color1);
+
+                transform: translate(-50%, -50%);
+            }
+            
+            /*
+
+                Zoom
+
+            */
+            #zoom {
+                position: fixed;
+                right: 2vh;
+                bottom: 2vh;
+
+                height: 3vh;
+                width: 6vh;
+
+                background-color: var(--color1);
+
+                border-radius: 1.5vh;
+
+                box-shadow: 0.1vh 0.1vh 0.4vh -0.2vh var(--color2);
+            }
+
+            #zoom svg {
+                margin: 0.25vh;
+
+                height: 2.5vh;
+                width: 2.5vh;
+            }
+
+            #zoom-level {
+                position: absolute;
+                top: 0;
+                right: 1vh;
+
+                line-height: 3vh;
+
+                font-family: 'Roboto', sans-serif;
+                font-size: 1.75vh;
+
+                color: var(--color2);
+            }
+        </style>
+    </head>
+
+    <body>
+        <canvas width="6000" height="6000">Canvas disabled</canvas>
+        <div id="zoom">
+            <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 30 30" style=" fill:#1c1b1a;"><path d="M 13 3 C 7.4889971 3 3 7.4889971 3 13 C 3 18.511003 7.4889971 23 13 23 C 15.396508 23 17.597385 22.148986 19.322266 20.736328 L 25.292969 26.707031 A 1.0001 1.0001 0 1 0 26.707031 25.292969 L 20.736328 19.322266 C 22.148986 17.597385 23 15.396508 23 13 C 23 7.4889971 18.511003 3 13 3 z M 13 5 C 17.430123 5 21 8.5698774 21 13 C 21 17.430123 17.430123 21 13 21 C 8.5698774 21 5 17.430123 5 13 C 5 8.5698774 8.5698774 5 13 5 z"></path></svg>
+            <div id="zoom-level">1x</div>
+        </div>
+
+        <script type="application/javascript">
+            const canvas_element = document.getElementsByTagName("canvas")[0]
+            const zoom_level_element = document.getElementById("zoom-level")
+            let zoom_level = 1;
+
+            window.addEventListener("wheel", e => {
+                zoom_level -= Math.sign(e.deltaY)
+                zoom_level = Math.min(5, Math.max(1, zoom_level))
+                
+                zoom_level_element.textContent = zoom_level + "x"
+                canvas_element.style.transform = `translate(-50%, -50%) scale(${zoom_level})`
+            })
+        </script>
+    </body>
+</html>
