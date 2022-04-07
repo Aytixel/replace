@@ -12,6 +12,7 @@
             :root {
                 --color1: #fff;
                 --color2: #1c1b1a;
+                --color3: #9c9894;
             }
 
             * {
@@ -46,8 +47,10 @@
 
                 height: 80vh;
                 width: 80vh;
-                
+
                 background-color: var(--color1);
+
+                image-rendering: pixelated;
 
                 transform: translate(-50%, -50%);
             }
@@ -63,7 +66,7 @@
                 bottom: 2vh;
 
                 height: 3vh;
-                width: 6vh;
+                width: 7vh;
 
                 background-color: var(--color1);
 
@@ -96,6 +99,7 @@
 
     <body>
         <canvas width="6000" height="6000">Canvas disabled</canvas>
+
         <div id="zoom">
             <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 30 30" style=" fill:#1c1b1a;"><path d="M 13 3 C 7.4889971 3 3 7.4889971 3 13 C 3 18.511003 7.4889971 23 13 23 C 15.396508 23 17.597385 22.148986 19.322266 20.736328 L 25.292969 26.707031 A 1.0001 1.0001 0 1 0 26.707031 25.292969 L 20.736328 19.322266 C 22.148986 17.597385 23 15.396508 23 13 C 23 7.4889971 18.511003 3 13 3 z M 13 5 C 17.430123 5 21 8.5698774 21 13 C 21 17.430123 17.430123 21 13 21 C 8.5698774 21 5 17.430123 5 13 C 5 8.5698774 8.5698774 5 13 5 z"></path></svg>
             <div id="zoom-level">1x</div>
@@ -104,15 +108,40 @@
         <script type="application/javascript">
             const canvas_element = document.getElementsByTagName("canvas")[0]
             const zoom_level_element = document.getElementById("zoom-level")
+            const canvas_context = canvas_element.getContext('2d')
             let zoom_level = 1;
+            const zoom_levels = [1, 2.5, 5, 7.5, 10, 15, 20, 30, 40, 60, 80]
+            
+            canvas_context.imageSmoothingEnabled = false
+
+            const change_pixel = (x, y, color) => {
+                canvas_context.fillStyle = color
+                canvas_context.fillRect(x * 3, y * 3, 3, 3)
+            }
+            const change_cursor = (x, y) => {
+                canvas_context.fillStyle = "#9c9894"
+                canvas_context.fillRect(x * 3 - 1, y * 3 - 1, 2, 1)
+                canvas_context.fillRect(x * 3 - 1, y * 3, 1, 1)
+                canvas_context.fillRect(x * 3 + 2, y * 3 - 1, 2, 1)
+                canvas_context.fillRect(x * 3 + 3, y * 3, 1, 1)
+                canvas_context.fillRect(x * 3 - 1, y * 3 + 3, 2, 1)
+                canvas_context.fillRect(x * 3 - 1, y * 3 + 2, 1, 1)
+                canvas_context.fillRect(x * 3 + 2, y * 3 + 3, 2, 1)
+                canvas_context.fillRect(x * 3 + 3, y * 3 + 2, 1, 1)
+            }
 
             window.addEventListener("wheel", e => {
                 zoom_level -= Math.sign(e.deltaY)
-                zoom_level = Math.min(5, Math.max(1, zoom_level))
+                zoom_level = Math.min(11, Math.max(1, zoom_level))
+
+                console.log(zoom_levels[zoom_level - 1])
                 
                 zoom_level_element.textContent = zoom_level + "x"
-                canvas_element.style.transform = `translate(-50%, -50%) scale(${zoom_level})`
+                canvas_element.style.transform = `translate(-50%, -50%) scale(${zoom_levels[zoom_level - 1]})`
             })
+
+            change_pixel(999, 999, "green")
+            change_cursor(999, 999)
         </script>
     </body>
 </html>
