@@ -3,6 +3,7 @@ import {
   MongoClient,
 } from "https://deno.land/x/mongo@v0.29.3/mod.ts";
 import { Image } from "https://deno.land/x/imagescript@1.2.9/mod.ts";
+import { compress } from "./compress.ts";
 
 const client = new MongoClient();
 
@@ -62,8 +63,14 @@ async function handle(conn: Deno.Conn) {
 
     switch (url.pathname) {
       case "/":
+        var body = compress(
+          request,
+          await Deno.readFile("./page/index.html"),
+          headers,
+        );
+
         respondWith(
-          new Response(await Deno.readFile("./page/index.html"), {
+          new Response(body, {
             headers,
             status,
           }),
@@ -74,8 +81,14 @@ async function handle(conn: Deno.Conn) {
       case "/current.png":
         headers["content-type"] = "image/png";
 
+        var body = compress(
+          request,
+          await current_image.encode(),
+          headers,
+        );
+
         respondWith(
-          new Response(await current_image.encode(), {
+          new Response(body, {
             headers,
             status,
           }),
