@@ -76,16 +76,23 @@
                 top: 50%;
                 left: 50%;
 
+                height: 80vh;
+                width: 80vh;
+
                 transform: translate(-50%, -50%);
             }
 
             #drawing canvas {
+                position: absolute;
+
                 height: 80vh;
                 width: 80vh;
 
-                background-color: var(--color1);
-
                 image-rendering: pixelated;
+            }
+
+            #drawing #image {
+                background-color: var(--color1);
             }
             
             /*
@@ -131,7 +138,8 @@
 
     <body>
         <div id="drawing">
-            <canvas width="6000" height="6000">Canvas disabled</canvas>
+            <canvas id="image" width="6000" height="6000">Canvas disabled</canvas>
+            <canvas id="cursor" width="6000" height="6000">Canvas disabled</canvas>
         </div>
         
         <div id="position">(1000, 1000)</div>
@@ -143,36 +151,39 @@
 
         <script type="application/javascript">
             const drawing_element = document.getElementById("drawing")
-            const canvas_element = document.getElementsByTagName("canvas")[0]
+            const image_canvas_element = document.getElementsByTagName("canvas")[0]
+            const cursor_canvas_element = document.getElementsByTagName("canvas")[1]
             const position_element = document.getElementById("position")
             const zoom_level_element = document.getElementById("zoom-level")
-            const canvas_context = canvas_element.getContext('2d')
+            const image_canvas_context = image_canvas_element.getContext('2d')
+            const cursor_canvas_context = cursor_canvas_element.getContext('2d')
             let zoom_level = 1;
             const zoom_levels = [1, 2.5, 5, 7.5, 10, 15, 20, 30, 40, 60, 80]
             let last_position = { x: 1000, y: 1000 }
             let last_screen_position = { x: 0, y: 0 }
             let canvas_offset = { x: 0, y: 0 }
             
-            canvas_context.imageSmoothingEnabled = false
+            image_canvas_context.imageSmoothingEnabled = false
 
             const clamp = (min, x, max) => Math.max(Math.min(x, max), min)
             const change_pixel = (x, y, color) => {
-                canvas_context.fillStyle = color
-                canvas_context.fillRect(x * 3, y * 3, 3, 3)
+                image_canvas_context.fillStyle = color
+                image_canvas_context.fillRect(x * 3, y * 3, 3, 3)
             }
             const change_cursor = (x, y) => {
-                canvas_context.fillStyle = "#9c9894"
-                canvas_context.fillRect(x * 3 - 1, y * 3 - 1, 2, 1)
-                canvas_context.fillRect(x * 3 - 1, y * 3, 1, 1)
-                canvas_context.fillRect(x * 3 + 2, y * 3 - 1, 2, 1)
-                canvas_context.fillRect(x * 3 + 3, y * 3, 1, 1)
-                canvas_context.fillRect(x * 3 - 1, y * 3 + 3, 2, 1)
-                canvas_context.fillRect(x * 3 - 1, y * 3 + 2, 1, 1)
-                canvas_context.fillRect(x * 3 + 2, y * 3 + 3, 2, 1)
-                canvas_context.fillRect(x * 3 + 3, y * 3 + 2, 1, 1)
+                cursor_canvas_context.clearRect(0, 0, 6000, 6000)
+                cursor_canvas_context.fillStyle = "#9c9894"
+                cursor_canvas_context.fillRect(x * 3 - 1, y * 3 - 1, 2, 1)
+                cursor_canvas_context.fillRect(x * 3 - 1, y * 3, 1, 1)
+                cursor_canvas_context.fillRect(x * 3 + 2, y * 3 - 1, 2, 1)
+                cursor_canvas_context.fillRect(x * 3 + 3, y * 3, 1, 1)
+                cursor_canvas_context.fillRect(x * 3 - 1, y * 3 + 3, 2, 1)
+                cursor_canvas_context.fillRect(x * 3 - 1, y * 3 + 2, 1, 1)
+                cursor_canvas_context.fillRect(x * 3 + 2, y * 3 + 3, 2, 1)
+                cursor_canvas_context.fillRect(x * 3 + 3, y * 3 + 2, 1, 1)
             }
             const update_position = () => {
-                const canvas_height = canvas_element.clientHeight * zoom_levels[zoom_level - 1]
+                const canvas_height = image_canvas_element.clientHeight * zoom_levels[zoom_level - 1]
                 const canvas_half_heigth = canvas_height / 2
 
                 canvas_offset.x = clamp(-canvas_half_heigth, (1000 - last_position.x) / 2000 * canvas_height, canvas_half_heigth)
@@ -189,7 +200,8 @@
                 zoom_level = Math.min(11, Math.max(1, zoom_level))
                 
                 zoom_level_element.textContent = zoom_level + "x"
-                canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
+                image_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
+                cursor_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
 
                 update_position()
             })
@@ -223,7 +235,7 @@
                 last_screen_position.y = e.screenY
                 
                 requestAnimationFrame(() => {
-                    const canvas_height = canvas_element.clientHeight * zoom_levels[zoom_level - 1]
+                    const canvas_height = image_canvas_element.clientHeight * zoom_levels[zoom_level - 1]
                     const canvas_half_heigth = canvas_height / 2
 
                     canvas_offset.x = clamp(-canvas_half_heigth * 0.9995, canvas_offset.x, canvas_half_heigth)
