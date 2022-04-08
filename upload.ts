@@ -41,6 +41,6 @@ await bucket.delete(
 const upstream = await bucket.openUploadStream("current");
 const writer = await upstream.getWriter();
 
-writer.write(await Deno.readFile("original.webp"));
+writer.write(await Deno.readFile("original.png"));
 
 await writer.close();
