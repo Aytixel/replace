@@ -21,6 +21,8 @@
 
                 margin: 0;
                 padding: 0;
+
+                font-family: 'Roboto', sans-serif;
             }
 
             html {
@@ -37,22 +39,53 @@
             
             /*
 
-                Canvas
+                Position
 
             */
-            canvas {
+            #position {
+                position: fixed;
+                top: 2vh;
+                left: 50%;
+
+                padding: 0 1.5vh;
+
+                height: 2.5vh;
+
+                background-color: var(--color1);
+
+                border-radius: 1.25vh;
+
+                line-height: 2.5vh;
+
+                font-size: 1.5vh;
+
+                color: var(--color2);
+
+                box-shadow: 0.1vh 0.1vh 0.4vh -0.2vh var(--color2);
+
+                transform: translateX(-50%);
+            }
+            
+            /*
+
+                Drawing
+
+            */
+            #drawing {
                 position: absolute;
                 top: 50%;
                 left: 50%;
 
+                transform: translate(-50%, -50%);
+            }
+
+            #drawing canvas {
                 height: 80vh;
                 width: 80vh;
 
                 background-color: var(--color1);
 
                 image-rendering: pixelated;
-
-                transform: translate(-50%, -50%);
             }
             
             /*
@@ -89,7 +122,6 @@
 
                 line-height: 3vh;
 
-                font-family: 'Roboto', sans-serif;
                 font-size: 1.75vh;
 
                 color: var(--color2);
@@ -98,7 +130,11 @@
     </head>
 
     <body>
-        <canvas width="6000" height="6000">Canvas disabled</canvas>
+        <div id="drawing">
+            <canvas width="6000" height="6000">Canvas disabled</canvas>
+        </div>
+        
+        <div id="position">(1000, 1000)</div>
 
         <div id="zoom">
             <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 30 30" style=" fill:#1c1b1a;"><path d="M 13 3 C 7.4889971 3 3 7.4889971 3 13 C 3 18.511003 7.4889971 23 13 23 C 15.396508 23 17.597385 22.148986 19.322266 20.736328 L 25.292969 26.707031 A 1.0001 1.0001 0 1 0 26.707031 25.292969 L 20.736328 19.322266 C 22.148986 17.597385 23 15.396508 23 13 C 23 7.4889971 18.511003 3 13 3 z M 13 5 C 17.430123 5 21 8.5698774 21 13 C 21 17.430123 17.430123 21 13 21 C 8.5698774 21 5 17.430123 5 13 C 5 8.5698774 8.5698774 5 13 5 z"></path></svg>
@@ -106,14 +142,20 @@
         </div>
 
         <script type="application/javascript">
+            const drawing_element = document.getElementById("drawing")
             const canvas_element = document.getElementsByTagName("canvas")[0]
+            const position_element = document.getElementById("position")
             const zoom_level_element = document.getElementById("zoom-level")
             const canvas_context = canvas_element.getContext('2d')
             let zoom_level = 1;
             const zoom_levels = [1, 2.5, 5, 7.5, 10, 15, 20, 30, 40, 60, 80]
+            let last_position = { x: 1000, y: 1000 }
+            let last_screen_position = { x: 0, y: 0 }
+            let canvas_offset = { x: 0, y: 0 }
             
             canvas_context.imageSmoothingEnabled = false
 
+            const clamp = (min, x, max) => Math.max(Math.min(x, max), min)
             const change_pixel = (x, y, color) => {
                 canvas_context.fillStyle = color
                 canvas_context.fillRect(x * 3, y * 3, 3, 3)
@@ -129,19 +171,95 @@
                 canvas_context.fillRect(x * 3 + 2, y * 3 + 3, 2, 1)
                 canvas_context.fillRect(x * 3 + 3, y * 3 + 2, 1, 1)
             }
+            const update_position = () => {
+                const canvas_height = canvas_element.clientHeight * zoom_levels[zoom_level - 1]
+                const canvas_half_heigth = canvas_height / 2
 
+                canvas_offset.x = clamp(-canvas_half_heigth, (1000 - last_position.x) / 2000 * canvas_height, canvas_half_heigth)
+                canvas_offset.y = clamp(-canvas_half_heigth, (1000 - last_position.y) / 2000 * canvas_height, canvas_half_heigth)
+                
+                drawing_element.style.transform = `translate(calc(-50% + ${canvas_offset.x}px), calc(-50% + ${canvas_offset.y}px))`
+                
+                change_cursor(last_position.x, last_position.y)
+            }
+
+            // zoom
             window.addEventListener("wheel", e => {
                 zoom_level -= Math.sign(e.deltaY)
                 zoom_level = Math.min(11, Math.max(1, zoom_level))
-
-                console.log(zoom_levels[zoom_level - 1])
                 
                 zoom_level_element.textContent = zoom_level + "x"
-                canvas_element.style.transform = `translate(-50%, -50%) scale(${zoom_levels[zoom_level - 1]})`
+                canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
+
+                update_position()
             })
 
-            change_pixel(999, 999, "green")
-            change_cursor(999, 999)
+            // change position
+            const start = e => {
+                e.preventDefault()
+
+                if (e.changedTouches) e = e.changedTouches[0]
+
+                last_screen_position.x = e.screenX
+                last_screen_position.y = e.screenY
+
+                window.addEventListener('mousemove', move)
+                window.addEventListener('touchmove', move, { passive: false })
+                window.addEventListener('mouseup', end)
+                window.addEventListener('mouseleave', end)
+                window.addEventListener('touchend', end)
+                window.addEventListener('touchcancel', end)
+                window.addEventListener('touchleave', end)
+            }
+            const move = e => {
+                e.preventDefault()
+
+                if (e.changedTouches) e = e.changedTouches[0]
+                
+                canvas_offset.x += (e.screenX - last_screen_position.x) * 4
+                canvas_offset.y += (e.screenY - last_screen_position.y) * 4
+
+                last_screen_position.x = e.screenX
+                last_screen_position.y = e.screenY
+                
+                requestAnimationFrame(() => {
+                    const canvas_height = canvas_element.clientHeight * zoom_levels[zoom_level - 1]
+                    const canvas_half_heigth = canvas_height / 2
+
+                    canvas_offset.x = clamp(-canvas_half_heigth * 0.9995, canvas_offset.x, canvas_half_heigth)
+                    canvas_offset.y = clamp(-canvas_half_heigth * 0.9995, canvas_offset.y, canvas_half_heigth)
+
+                    last_position.x = Math.floor(1000 - (canvas_offset.x / canvas_height * 2000))
+                    last_position.y = Math.floor(1000 - (canvas_offset.y / canvas_height * 2000))
+
+                    position_element.textContent = `(${last_position.x}, ${last_position.y})`
+
+                    drawing_element.style.transform = `translate(calc(-50% + ${canvas_offset.x}px), calc(-50% + ${canvas_offset.y}px))`
+
+                    change_cursor(last_position.x, last_position.y)
+                })
+            }
+            const end = e => {
+                e.preventDefault()
+
+                window.removeEventListener('mousemove', move)
+                window.removeEventListener('touchmove', move)
+                window.removeEventListener('mouseup', end)
+                window.removeEventListener('mouseleave', end)
+                window.removeEventListener('touchend', end)
+                window.removeEventListener('touchcancel', end)
+                window.removeEventListener('touchleave', end)
+            }
+
+            window.addEventListener("resize", update_position)
+            window.addEventListener("mousedown", start)
+            window.addEventListener("touchstart", start, { passive: true })
+
+            change_cursor(1000, 1000)
+            change_pixel(0, 0, "red")
+            change_pixel(0, 1999, "red")
+            change_pixel(1999, 0, "red")
+            change_pixel(1999, 1999, "red")
         </script>
     </body>
 </html>
