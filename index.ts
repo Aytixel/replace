@@ -65,7 +65,7 @@ async function handle(conn: Deno.Conn) {
       case "/":
         var body = compress(
           request,
-          await Deno.readFile("./page/index.html"),
+          await Deno.readFile("./page/index_minified.html"),
           headers,
         );
 
