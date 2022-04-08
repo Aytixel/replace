@@ -92,7 +92,8 @@
             }
 
             #drawing #image {
-                background-color: var(--color1);
+                background-image: url("/current.png");
+                background-size: contain;
             }
             
             /*
@@ -158,7 +159,7 @@
             const image_canvas_context = image_canvas_element.getContext('2d')
             const cursor_canvas_context = cursor_canvas_element.getContext('2d')
             let zoom_level = 1;
-            const zoom_levels = [1, 2.5, 5, 7.5, 10, 15, 20, 30, 40, 60, 80]
+            const zoom_levels = [1, 2.5, 5, 7.5, 10, 15, 20, 30, 40, 60]
             let last_position = { x: 1000, y: 1000 }
             let last_screen_position = { x: 0, y: 0 }
             let canvas_offset = { x: 0, y: 0 }
@@ -197,7 +198,7 @@
             // zoom
             window.addEventListener("wheel", e => {
                 zoom_level -= Math.sign(e.deltaY)
-                zoom_level = Math.min(11, Math.max(1, zoom_level))
+                zoom_level = Math.min(10, Math.max(1, zoom_level))
                 
                 zoom_level_element.textContent = zoom_level + "x"
                 image_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
@@ -228,8 +229,8 @@
 
                 if (e.changedTouches) e = e.changedTouches[0]
                 
-                canvas_offset.x += (e.screenX - last_screen_position.x) * 4
-                canvas_offset.y += (e.screenY - last_screen_position.y) * 4
+                canvas_offset.x += (e.screenX - last_screen_position.x)
+                canvas_offset.y += (e.screenY - last_screen_position.y)
 
                 last_screen_position.x = e.screenX
                 last_screen_position.y = e.screenY
