@@ -139,8 +139,8 @@
 
     <body>
         <div id="drawing">
-            <canvas id="image" width="6000" height="6000">Canvas disabled</canvas>
-            <canvas id="cursor" width="6000" height="6000">Canvas disabled</canvas>
+            <canvas id="image" width="2000" height="2000">Canvas disabled</canvas>
+            <canvas id="cursor" width="12000" height="12000">Canvas disabled</canvas>
         </div>
         
         <div id="position">(1000, 1000)</div>
@@ -169,19 +169,17 @@
             const clamp = (min, x, max) => Math.max(Math.min(x, max), min)
             const change_pixel = (x, y, color) => {
                 image_canvas_context.fillStyle = color
-                image_canvas_context.fillRect(x * 3, y * 3, 3, 3)
+                image_canvas_context.fillRect(x, y, 1, 1)
             }
             const change_cursor = (x, y) => {
-                cursor_canvas_context.clearRect(0, 0, 6000, 6000)
+                cursor_canvas_context.clearRect(0, 0, 12000, 12000)
                 cursor_canvas_context.fillStyle = "#9c9894"
-                cursor_canvas_context.fillRect(x * 3 - 1, y * 3 - 1, 2, 1)
-                cursor_canvas_context.fillRect(x * 3 - 1, y * 3, 1, 1)
-                cursor_canvas_context.fillRect(x * 3 + 2, y * 3 - 1, 2, 1)
-                cursor_canvas_context.fillRect(x * 3 + 3, y * 3, 1, 1)
-                cursor_canvas_context.fillRect(x * 3 - 1, y * 3 + 3, 2, 1)
-                cursor_canvas_context.fillRect(x * 3 - 1, y * 3 + 2, 1, 1)
-                cursor_canvas_context.fillRect(x * 3 + 2, y * 3 + 3, 2, 1)
-                cursor_canvas_context.fillRect(x * 3 + 3, y * 3 + 2, 1, 1)
+                cursor_canvas_context.fillRect(x * 6 - 2, y * 6 - 2, 10, 10)
+                cursor_canvas_context.fillStyle = "#5c5956"
+                cursor_canvas_context.fillRect(x * 6 - 1, y * 6 - 1, 8, 8)
+                cursor_canvas_context.clearRect(x * 6, y * 6, 6, 6)
+                cursor_canvas_context.clearRect(x * 6 - 2, y * 6 + 2, 10, 2)
+                cursor_canvas_context.clearRect(x * 6 + 2, y * 6 - 2, 2, 10)
             }
             const update_position = () => {
                 const canvas_height = image_canvas_element.clientHeight * zoom_levels[zoom_level - 1]
