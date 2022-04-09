@@ -89,6 +89,8 @@
                 width: 80vh;
 
                 image-rendering: pixelated;
+
+                transform-origin: top left;
             }
 
             #drawing #image {
@@ -160,9 +162,10 @@
             const cursor_canvas_context = cursor_canvas_element.getContext('2d')
             let zoom_level = 1;
             const zoom_levels = [1, 2.5, 5, 7.5, 10, 15, 20, 30, 40, 60]
-            let last_position = { x: 1000, y: 1000 }
-            let last_screen_position = { x: 0, y: 0 }
-            let canvas_offset = { x: 0, y: 0 }
+            const canvas_half_heigth = image_canvas_element.clientHeight / 2
+            const canvas_offset = { x: canvas_half_heigth, y: canvas_half_heigth }
+            const last_position = { x: 1000, y: 1000 }
+            const last_screen_position = { x: 0, y: 0 }
             
             image_canvas_context.imageSmoothingEnabled = false
 
@@ -183,12 +186,11 @@
             }
             const update_position = () => {
                 const canvas_height = image_canvas_element.clientHeight * zoom_levels[zoom_level - 1]
-                const canvas_half_heigth = canvas_height / 2
 
-                canvas_offset.x = clamp(-canvas_half_heigth, (1000 - last_position.x) / 2000 * canvas_height, canvas_half_heigth)
-                canvas_offset.y = clamp(-canvas_half_heigth, (1000 - last_position.y) / 2000 * canvas_height, canvas_half_heigth)
+                canvas_offset.x = clamp(0, (1999 - last_position.x) / 2000 * canvas_height, canvas_height * 0.9995)
+                canvas_offset.y = clamp(0, (1999 - last_position.y) / 2000 * canvas_height, canvas_height * 0.9995)
                 
-                drawing_element.style.transform = `translate(calc(-50% + ${canvas_offset.x}px), calc(-50% + ${canvas_offset.y}px))`
+                drawing_element.style.transform = `translate(${canvas_offset.x - canvas_height}px, ${canvas_offset.y - canvas_height}px)`
                 
                 change_cursor(last_position.x, last_position.y)
             }
@@ -235,17 +237,16 @@
                 
                 requestAnimationFrame(() => {
                     const canvas_height = image_canvas_element.clientHeight * zoom_levels[zoom_level - 1]
-                    const canvas_half_heigth = canvas_height / 2
 
-                    canvas_offset.x = clamp(-canvas_half_heigth * 0.9995, canvas_offset.x, canvas_half_heigth)
-                    canvas_offset.y = clamp(-canvas_half_heigth * 0.9995, canvas_offset.y, canvas_half_heigth)
+                    canvas_offset.x = clamp(0, canvas_offset.x, canvas_height * 0.9995)
+                    canvas_offset.y = clamp(0, canvas_offset.y, canvas_height * 0.9995)
 
-                    last_position.x = Math.floor(1000 - (canvas_offset.x / canvas_height * 2000))
-                    last_position.y = Math.floor(1000 - (canvas_offset.y / canvas_height * 2000))
+                    last_position.x = Math.floor(1999 - (canvas_offset.x / canvas_height * 2000))
+                    last_position.y = Math.floor(1999 - (canvas_offset.y / canvas_height * 2000))
 
                     position_element.textContent = `(${last_position.x}, ${last_position.y})`
 
-                    drawing_element.style.transform = `translate(calc(-50% + ${canvas_offset.x}px), calc(-50% + ${canvas_offset.y}px))`
+                    drawing_element.style.transform = `translate(${canvas_offset.x - canvas_height}px, ${canvas_offset.y - canvas_height}px)`
 
                     change_cursor(last_position.x, last_position.y)
                 })
