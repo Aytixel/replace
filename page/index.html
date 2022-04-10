@@ -198,7 +198,7 @@
             // zoom
             window.addEventListener("wheel", e => {
                 zoom_level -= Math.sign(e.deltaY)
-                zoom_level = Math.min(10, Math.max(1, zoom_level))
+                zoom_level = clamp(1, zoom_level, 10)
                 
                 zoom_level_element.textContent = zoom_level + "x"
                 image_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
@@ -241,8 +241,8 @@
                     canvas_offset.x = clamp(0, canvas_offset.x, canvas_height * 0.9995)
                     canvas_offset.y = clamp(0, canvas_offset.y, canvas_height * 0.9995)
 
-                    last_position.x = Math.floor(1999 - (canvas_offset.x / canvas_height * 2000))
-                    last_position.y = Math.floor(1999 - (canvas_offset.y / canvas_height * 2000))
+                    last_position.x = Math.round(1999 - (canvas_offset.x / canvas_height * 2000))
+                    last_position.y = Math.round(1999 - (canvas_offset.y / canvas_height * 2000))
 
                     position_element.textContent = `(${last_position.x}, ${last_position.y})`
 
@@ -268,10 +268,30 @@
             window.addEventListener("touchstart", start, { passive: true })
 
             change_cursor(1000, 1000)
-            change_pixel(0, 0, "red")
-            change_pixel(0, 1999, "red")
-            change_pixel(1999, 0, "red")
-            change_pixel(1999, 1999, "red")
+            
+            const ws = new WebSocket("ws://replace.tk")
+            let last_update = null
+
+            ws.addEventListener("open", () => {
+                ws.addEventListener("message", e => {
+                    if (typeof e.data === "string") {
+                        const split_data = e.data.split(":")
+                        const command = split_data.shift()
+
+                        switch (command) {
+                            case "register":
+                                localStorage.setItem("uuid", split_data.shift())
+
+                                last_update = new Date(split_data.join(":"))
+
+                                console.log(localStorage.getItem("uuid"), last_update)
+                                break
+                        }
+                    }
+                })
+
+                ws.send("register:" + (localStorage.getItem("uuid") || ""))
+            })
         </script>
     </body>
 </html>

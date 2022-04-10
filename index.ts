@@ -4,6 +4,7 @@ import {
 } from "https://deno.land/x/mongo@v0.29.3/mod.ts";
 import { Image } from "https://deno.land/x/imagescript@1.2.9/mod.ts";
 import { compress } from "./compress.ts";
+import { v4 } from "https://deno.land/std@0.134.0/uuid/mod.ts";
 
 const client = new MongoClient();
 
@@ -33,6 +34,8 @@ await client.connect({
 });
 
 const image_database = client.database("image");
+const user_database = client.database("user");
+const id_collection = user_database.collection("id");
 const bucket = new GridFSBucket(image_database);
 const image_file_id =
   (await bucket.find({ filename: "current" }).toArray())[0]._id;
@@ -52,49 +55,110 @@ const server = Deno.listen({
   port: 80,
   hostname: "replace.tk",
 });
+const ws_set = new Set();
 
 async function handle(conn: Deno.Conn) {
   for await (const { request, respondWith } of Deno.serveHttp(conn)) {
     const url = new URL(request.url);
-    const headers = {
-      "content-type": "text/html; charset=UTF-8",
-    };
-    const status = 200;
 
-    switch (url.pathname) {
-      case "/":
-        var body = compress(
-          request,
-          await Deno.readFile("./page/index_minified.html"),
-          headers,
-        );
+    if (request.headers.get("upgrade") == "websocket") {
+      const { socket: ws, response } = Deno.upgradeWebSocket(request);
 
-        respondWith(
-          new Response(body, {
+      ws_set.add(ws);
+
+      ws.addEventListener("open", () => {
+        ws.addEventListener("message", async (e) => {
+          if (typeof e.data === "string") {
+            const split_data = e.data.split(":");
+            const command = split_data.shift();
+
+            switch (command) {
+              case "register":
+                const potential_uuid = split_data.shift();
+
+                if (v4.validate(potential_uuid || "")) {
+                  const found_id = await id_collection.findOne({
+                    uuid: potential_uuid,
+                  });
+
+                  if (found_id) {
+                    ws.send(
+                      `register:${found_id.uuid}:${found_id.last_update.toISOString()}`,
+                    );
+                    break;
+                  }
+                }
+
+                const register_date = new Date();
+                const register_uuid = crypto.randomUUID();
+
+                await id_collection.insertOne({
+                  last_update: register_date,
+                  uuid: register_uuid,
+                });
+
+                ws.send(
+                  `register:${register_uuid}:${register_date.toISOString()}`,
+                );
+
+                break;
+            }
+          }
+        });
+      });
+
+      const end = () => {
+        ws.close();
+        ws_set.delete(ws);
+      };
+
+      ws.addEventListener("close", end);
+      ws.addEventListener("error", end);
+
+      respondWith(response).catch(
+        console.error,
+      );
+    } else {
+      const headers = {
+        "content-type": "text/html; charset=UTF-8",
+      };
+      const status = 200;
+
+      switch (url.pathname) {
+        case "/":
+          var body = compress(
+            request,
+            await Deno.readFile("./page/index.html"),
             headers,
-            status,
-          }),
-        ).catch(
-          console.error,
-        );
-        break;
-      case "/current.png":
-        headers["content-type"] = "image/png";
+          );
 
-        var body = compress(
-          request,
-          await current_image.encode(),
-          headers,
-        );
+          respondWith(
+            new Response(body, {
+              headers,
+              status,
+            }),
+          ).catch(
+            console.error,
+          );
+          break;
+        case "/current.png":
+          headers["content-type"] = "image/png";
 
-        respondWith(
-          new Response(body, {
+          var body = compress(
+            request,
+            await current_image.encode(),
             headers,
-            status,
-          }),
-        ).catch(
-          console.error,
-        );
+          );
+
+          respondWith(
+            new Response(body, {
+              headers,
+              status,
+            }),
+          ).catch(
+            console.error,
+          );
+      }
     }
   }
 }
