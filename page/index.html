@@ -275,14 +275,14 @@
             ws.addEventListener("open", () => {
                 ws.addEventListener("message", e => {
                     if (typeof e.data === "string") {
-                        const split_data = e.data.split(":")
+                        const split_data = e.data.split("::")
                         const command = split_data.shift()
 
                         switch (command) {
                             case "register":
                                 localStorage.setItem("uuid", split_data.shift())
 
-                                last_update = new Date(split_data.join(":"))
+                                last_update = new Date(split_data)
 
                                 console.log(localStorage.getItem("uuid"), last_update)
                                 break
@@ -290,7 +290,7 @@
                     }
                 })
 
-                ws.send("register:" + (localStorage.getItem("uuid") || ""))
+                ws.send("register::" + (localStorage.getItem("uuid") || ""))
             })
         </script>
     </body>

@@ -69,7 +69,7 @@ async function handle(conn: Deno.Conn) {
       ws.addEventListener("open", () => {
         ws.addEventListener("message", async (e) => {
           if (typeof e.data === "string") {
-            const split_data = e.data.split(":");
+            const split_data = e.data.split("::");
             const command = split_data.shift();
 
             switch (command) {
@@ -83,7 +83,7 @@ async function handle(conn: Deno.Conn) {
 
                   if (found_id) {
                     ws.send(
-                      `register:${found_id.uuid}:${found_id.last_update.toISOString()}`,
+                      `register::${found_id.uuid}::${found_id.last_update.toISOString()}`,
                     );
                     break;
                   }
@@ -98,7 +98,7 @@ async function handle(conn: Deno.Conn) {
                 });
 
                 ws.send(
-                  `register:${register_uuid}:${register_date.toISOString()}`,
+                  `register::${register_uuid}::${register_date.toISOString()}`,
                 );
 
                 break;
