@@ -33,6 +33,40 @@ await client.connect({
   },
 });
 
+const colors = [
+  [109, 0, 26],
+  [190, 0, 57],
+  [255, 69, 0],
+  [255, 168, 0],
+  [255, 214, 53],
+  [255, 248, 184],
+  [0, 163, 104],
+  [0, 204, 120],
+  [126, 237, 86],
+  [0, 177, 111],
+  [0, 158, 170],
+  [0, 204, 192],
+  [36, 80, 164],
+  [54, 144, 234],
+  [81, 233, 244],
+  [73, 58, 193],
+  [106, 92, 255],
+  [148, 179, 255],
+  [129, 30, 159],
+  [180, 74, 192],
+  [228, 171, 255],
+  [222, 16, 127],
+  [255, 56, 129],
+  [255, 153, 170],
+  [109, 72, 47],
+  [156, 105, 38],
+  [255, 180, 112],
+  [0, 0, 0],
+  [81, 82, 82],
+  [137, 141, 144],
+  [212, 215, 217],
+  [255, 255, 255],
+];
 const image_database = client.database("image");
 const user_database = client.database("user");
 const id_collection = user_database.collection("id");
@@ -57,6 +91,13 @@ const server = Deno.listen({
 });
 const ws_set = new Set();
 
+const check_int = (n: string | undefined) => n && !isNaN(parseInt(n));
+const change_pixel = (x: number, y: number, color: number) => {
+  current_image.bitmap[x * 4 + y * 8000] = colors[color][0];
+  current_image.bitmap[x * 4 + y * 8000 + 1] = colors[color][1];
+  current_image.bitmap[x * 4 + y * 8000 + 2] = colors[color][2];
+};
+
 async function handle(conn: Deno.Conn) {
   for await (const { request, respondWith } of Deno.serveHttp(conn)) {
     const url = new URL(request.url);
@@ -74,16 +115,16 @@ async function handle(conn: Deno.Conn) {
 
             switch (command) {
               case "register":
-                const potential_uuid = split_data.shift();
+                var potential_uuid = split_data.shift();
 
                 if (v4.validate(potential_uuid || "")) {
-                  const found_id = await id_collection.findOne({
+                  const query = await id_collection.findOne({
                     uuid: potential_uuid,
                   });
 
-                  if (found_id) {
+                  if (query) {
                     ws.send(
-                      `register::${found_id.uuid}::${found_id.last_update.toISOString()}`,
+                      `register::${query.uuid}::${query.last_update.toISOString()}`,
                     );
                     break;
                   }
@@ -100,7 +141,50 @@ async function handle(conn: Deno.Conn) {
                 ws.send(
                   `register::${register_uuid}::${register_date.toISOString()}`,
                 );
+                break;
+              case "place":
+                var potential_uuid = split_data.shift();
 
+                if (v4.validate(potential_uuid || "")) {
+                  const update = new Date();
+                  const query = await id_collection.findOne({
+                    uuid: potential_uuid,
+                  });
+                  const x = split_data.shift();
+                  const y = split_data.shift();
+                  const color = split_data.shift();
+
+                  if (
+                    query &&
+                    (update.getTime() - query.last_update.getTime()) >
+                      300000 &&
+                    check_int(x) && check_int(y) && check_int(color)
+                  ) {
+                    const x_number = parseInt(x || "");
+                    const y_number = parseInt(y || "");
+                    const color_number = parseInt(color || "");
+
+                    if (
+                      x_number < 2000 && x_number >= 0 && y_number < 2000 &&
+                      y_number >= 0 && color_number < 32 && color_number >= 0
+                    ) {
+                      await id_collection.updateOne({
+                        uuid: potential_uuid,
+                      }, {
+                        $set: { last_update: update },
+                      });
+
+                      change_pixel(x_number, y_number, color_number);
+
+                      ws.send(
+                        `place::${update}::${x_number}::${y_number}::${color_number}`,
+                      );
+                      break;
+                    }
+                  }
+                }
+
+                ws.send(`place`);
                 break;
             }
           }
@@ -163,6 +247,6 @@ async function handle(conn: Deno.Conn) {
   }
 }
 
-for await (const conn of server) handle(conn).catch(console.error);
-
 console.log("Server started");
+
+for await (const conn of server) handle(conn).catch(console.error);

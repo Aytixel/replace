@@ -189,6 +189,14 @@
                 background-color: var(--color1);
 
                 box-shadow: 0.1vh 0.1vh 0.4vh -0.2vh var(--color2);
+
+                transform: translateY(100%);
+
+                transition: 0.2s transform ease-in-out;
+            }
+
+            #place-bar.focus {
+                transform: translateY(0);
             }
 
             #colors {
@@ -224,38 +232,38 @@
                 box-shadow: 0 0 0 0.15vh var(--color2);
             }
 
-            #burgandy {background-color: #6d001a;}
-            #dark-red {background-color: #be0039;}
-            #red {background-color: #ff4500;}
-            #orange {background-color: #ffa800;}
-            #yellow {background-color: #ffd635;}
-            #pale-yellow {background-color: #fff8b8;}
-            #dark-green {background-color: #00a368;}
-            #green {background-color: #00cc78;}
-            #light-green {background-color: #7eed56;}
-            #dark-teal {background-color: #00756f;}
-            #teal {background-color: #009eaa;}
-            #light-teal {background-color: #00ccc0;}
-            #dark-blue {background-color: #2450a4;}
-            #blue {background-color: #3690ea;}
-            #light-blue {background-color: #51e9f4;}
-            #indigo {background-color: #493ac1;}
-            #periwinkle {background-color: #6a5cff;}
-            #lavender {background-color: #94b3ff;}
-            #dark-purple {background-color: #811e9f;}
-            #purple {background-color: #b44ac0;}
-            #pale-purple {background-color: #e4abff;}
-            #magenta {background-color: #de107f;}
-            #pink {background-color: #ff3881;}
-            #light-pink {background-color: #ff99aa;}
-            #dark-brown {background-color: #6d482f;}
-            #brown {background-color: #9c6926;}
-            #beige {background-color: #ffb470;}
-            #black {background-color: #000000;}
-            #dark-gray {background-color: #515252;}
-            #gray {background-color: #898d90;}
-            #light-gray {background-color: #d4d7d9;}
-            #white {background-color: #ffffff;}
+            #burgandy { background-color: #6d001a; }
+            #dark-red { background-color: #be0039; }
+            #red { background-color: #ff4500; }
+            #orange { background-color: #ffa800; }
+            #yellow { background-color: #ffd635; }
+            #pale-yellow { background-color: #fff8b8; }
+            #dark-green { background-color: #00a368; }
+            #green { background-color: #00cc78; }
+            #light-green { background-color: #7eed56; }
+            #dark-teal { background-color: #00756f; }
+            #teal { background-color: #009eaa; }
+            #light-teal { background-color: #00ccc0; }
+            #dark-blue { background-color: #2450a4; }
+            #blue { background-color: #3690ea; }
+            #light-blue { background-color: #51e9f4; }
+            #indigo { background-color: #493ac1; }
+            #periwinkle { background-color: #6a5cff; }
+            #lavender { background-color: #94b3ff; }
+            #dark-purple { background-color: #811e9f; }
+            #purple { background-color: #b44ac0; }
+            #pale-purple { background-color: #e4abff; }
+            #magenta { background-color: #de107f; }
+            #pink { background-color: #ff3881; }
+            #light-pink { background-color: #ff99aa; }
+            #dark-brown { background-color: #6d482f; }
+            #brown { background-color: #9c6926; }
+            #beige { background-color: #ffb470; }
+            #black { background-color: #000000; }
+            #dark-gray { background-color: #515252; }
+            #gray { background-color: #898d90; }
+            #light-gray { background-color: #d4d7d9; }
+            #white { background-color: #ffffff; }
 
             #place-button-container {
                 display: flex;
@@ -382,7 +390,7 @@
                 <div id="dark-gray" class="color"></div>
                 <div id="gray" class="color"></div>
                 <div id="light-gray" class="color"></div>
-                <div id="white" class="color"></div>
+                <div id="white" class="color focus"></div>
             </div>
 
             <div id="place-button-container">
@@ -392,30 +400,32 @@
         </div>
 
         <script type="application/javascript">
+            const colors = ["#6d001a", "#be0039", "#ff4500", "#ffa800", "#ffd635", "#fff8b8", "#00a368", "#00cc78", "#7eed56", "#00756f", "#009eaa", "#00ccc0", "#2450a4", "#3690ea", "#51e9f4", "#493ac1", "#6a5cff", "#94b3ff", "#811e9f", "#b44ac0", "#e4abff", "#de107f", "#ff3881", "#ff99aa", "#6d482f", "#9c6926", "#ffb470", "#000000", "#515252", "#898d90", "#d4d7d9", "#ffffff"]
             const drawing_element = document.getElementById("drawing")
-            const image_canvas_element = document.getElementsByTagName("canvas")[0]
-            const cursor_canvas_element = document.getElementsByTagName("canvas")[1]
+            const image_canvas_element = document.getElementById("image")
+            const cursor_canvas_element = document.getElementById("cursor")
             const position_element = document.getElementById("position")
-            const zoom_level_element = document.getElementById("zoom-level")
             const timer_element = document.getElementById("timer")
             const time_element = document.getElementById("time")
+            const zoom_level_element = document.getElementById("zoom-level")
+            const place_bar_element = document.getElementById("place-bar")
+            const cancel_place_element = document.getElementById("cancel-place")
+            const valid_place_element = document.getElementById("valid-place")
+            const color_elements = place_bar_element.getElementsByClassName("color") 
             const image_canvas_context = image_canvas_element.getContext('2d')
             const cursor_canvas_context = cursor_canvas_element.getContext('2d')
-            let zoom_level = 1;
+            let zoom_level = 1
             const zoom_levels = [1, 2.5, 5, 7.5, 10, 15, 20, 30, 40, 60]
             const canvas_half_heigth = image_canvas_element.clientHeight / 2
             const canvas_offset = { x: canvas_half_heigth, y: canvas_half_heigth }
             const last_position = { x: 1000, y: 1000 }
             const last_screen_position = { x: 0, y: 0 }
-            let timer = 300;
+            let timer = 300
+            let is_placing = false
             
             image_canvas_context.imageSmoothingEnabled = false
 
             const clamp = (min, x, max) => Math.max(Math.min(x, max), min)
-            const change_pixel = (x, y, color) => {
-                image_canvas_context.fillStyle = color
-                image_canvas_context.fillRect(x, y, 1, 1)
-            }
 
             // timer
             const complete_number = n => (n.toString().length % 2 ? "0" : "") + n
@@ -423,15 +433,30 @@
             const reset_timer = () => {
                 timer = 300
 
-                timer_element.classList.toggle("place-mode", false)
+                timer_element.classList.remove("place-mode")
             }
+
+            timer_element.addEventListener("click", e => {
+                if (timer < 1) place_bar_element.classList.add("focus")
+            })
 
             setInterval(() => {
                 display_time()
 
                 if (timer > 0) timer--
-                else timer_element.classList.toggle("place-mode", true)
+                else timer_element.classList.add("place-mode")
             }, 1000)
+
+            // place bar
+            cancel_place_element.addEventListener("click", () => place_bar_element.classList.remove("focus"))
+
+            for (const color_element of color_elements) {
+                color_element.addEventListener("click", () => {
+                    for (const color_element of color_elements) color_element.classList.remove("focus")
+
+                    color_element.classList.add("focus")
+                })
+            }
 
             // zoom
             const change_cursor = (x, y) => {
@@ -449,25 +474,30 @@
 
                 canvas_offset.x = clamp(0, (1999 - last_position.x) / 2000 * canvas_height, canvas_height * 0.9995)
                 canvas_offset.y = clamp(0, (1999 - last_position.y) / 2000 * canvas_height, canvas_height * 0.9995)
-                
+                    
                 drawing_element.style.transform = `translate(${canvas_offset.x - canvas_height}px, ${canvas_offset.y - canvas_height}px)`
-                
+                    
                 change_cursor(last_position.x, last_position.y)
             }
 
             window.addEventListener("wheel", e => {
-                zoom_level -= Math.sign(e.deltaY)
-                zoom_level = clamp(1, zoom_level, 10)
-                
-                zoom_level_element.textContent = zoom_level + "x"
-                image_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
-                cursor_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
+                requestAnimationFrame(() => {
+                    zoom_level -= Math.sign(e.deltaY)
+                    zoom_level = clamp(1, zoom_level, 10)
+                    
+                    zoom_level_element.textContent = zoom_level + "x"
+                    image_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
+                    cursor_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
 
-                update_position()
+                    update_position()
+                })
             })
 
             // change position
             const start = e => {
+                // prevent move from starting on the place bar
+                if (e.path.some(element => element == place_bar_element)) return
+
                 e.preventDefault()
 
                 if (e.changedTouches) e = e.changedTouches[0]
@@ -522,7 +552,7 @@
                 window.removeEventListener('touchleave', end)
             }
 
-            window.addEventListener("resize", update_position)
+            window.addEventListener("resize", () => requestAnimationFrame(update_position))
             window.addEventListener("mousedown", start)
             window.addEventListener("touchstart", start, { passive: true })
 
@@ -530,6 +560,11 @@
             
             const ws = new WebSocket("ws://replace.tk")
             let last_update = null
+
+            const change_pixel = (x, y, color) => {
+                image_canvas_context.fillStyle = colors[color]
+                image_canvas_context.fillRect(x, y, 1, 1)
+            }
 
             ws.addEventListener("open", () => {
                 ws.addEventListener("message", e => {
@@ -542,10 +577,34 @@
                                 localStorage.setItem("uuid", split_data.shift())
 
                                 // setup the timer
-                                timer = 300 - (new Date() - (last_update = new Date(split_data)))
+                                timer = 300 - Math.round((new Date() - (last_update = new Date(split_data.shift()))) / 1000)
 
-                                if (timer < 1)  timer_element.classList.toggle("place-mode", true)
+                                display_time()
 
+                                if (timer < 1)  timer_element.classList.add("place-mode")
+
+                                // place bar
+                                valid_place_element.addEventListener("click", () => {
+                                    if (!is_placing) {
+                                        for (let i = 0; i < 32; i++) {
+                                            if (color_elements[i].classList.contains("focus")) {
+                                                is_placing = true
+
+                                                ws.send(`place::${localStorage.getItem("uuid")}::${last_position.x}::${last_position.y}::${i}`)
+                                            }
+                                        }
+                                    }
+                                })
+                                break
+                            case "place":
+                                if (split_data.length >= 4) {
+                                    last_update = new Date(split_data.shift())
+
+                                    place_bar_element.classList.remove("focus")
+
+                                    change_pixel(+split_data.shift(), +split_data.shift(), +split_data.shift())
+                                    reset_timer()
+                                }
                                 break
                         }
                     }
