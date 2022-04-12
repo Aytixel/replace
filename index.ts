@@ -103,8 +103,7 @@ const change_pixel = (x: number, y: number, color: number) => {
 };
 
 setInterval(async () => {
-  const upstream = await bucket.openUploadStream("current");
-  const writer = upstream.getWriter();
+  const writer = (await bucket.openUploadStream("current")).getWriter();
 
   writer.write(current_encoded_image = await current_image.encode());
 
