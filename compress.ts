@@ -1,5 +1,5 @@
 import { compress as brotli_compress } from "https://deno.land/x/brotli@v0.1.4/mod.ts";
-import { deflate, gzip } from "https://deno.land/x/denoflate@1.2.1/mod.ts";
+import { deflate, gzip } from "https://deno.land/x/compress@v0.4.4/mod.ts";
 
 function compress(
   request: Request,
@@ -12,7 +12,7 @@ function compress(
     headers["vary"] = "Accept-Encoding";
     headers["content-encoding"] = "gzip";
 
-    return gzip(data, undefined);
+    return gzip(data);
   }
   if (/\bdeflate\b/.test(acceptEncoding)) {
     headers["vary"] = "Accept-Encoding";
