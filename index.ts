@@ -248,14 +248,8 @@ async function handle(conn: Deno.Conn) {
         case "/current.png":
           headers["content-type"] = "image/png";
 
-          var body = compress(
-            request,
-            current_encoded_image,
-            headers,
-          );
-
           respondWith(
-            new Response(body, {
+            new Response(current_encoded_image, {
               headers,
               status,
             }),
