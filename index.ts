@@ -2,7 +2,7 @@ import {
   GridFSBucket,
   MongoClient,
 } from "https://deno.land/x/mongo@v0.29.3/mod.ts";
-import { Image } from "https://deno.land/x/imagescript@1.2.9/mod.ts";
+import { Image } from "https://deno.land/x/imagescript@v1.2.12/mod.ts";
 import { compress } from "./compress.ts";
 import { v4 } from "https://deno.land/std@0.134.0/uuid/mod.ts";
 
@@ -77,7 +77,6 @@ const image_file_reader = (await bucket.openDownloadStream(image_file_id))
   .getReader();
 let image_file_data = [];
 let data;
-let pixel_changes = "";
 
 while (data = (await image_file_reader.read()).value) {
   image_file_data.push([...data]);
@@ -86,6 +85,8 @@ while (data = (await image_file_reader.read()).value) {
 image_file_data = image_file_data.flat();
 
 const current_image = await Image.decode(image_file_data);
+let current_encoded_image = new Uint8Array(image_file_data);
+let pixel_changes = "";
 const server = Deno.listen({
   port: 80,
   hostname: "replace.tk",
@@ -101,9 +102,13 @@ const change_pixel = (x: number, y: number, color: number) => {
   pixel_changes += `::${x}::${y}::${color}`;
 };
 
-setInterval(() => {
+setInterval(async () => {
+  current_encoded_image = await current_image.encode();
+
   for (const ws of ws_set) {
-    (ws as WebSocket).send("other_place" + pixel_changes);
+    if ((ws as WebSocket).readyState === WebSocket.OPEN) {
+      (ws as WebSocket).send("other_place" + pixel_changes);
+    }
   }
 
   pixel_changes = "";
@@ -118,97 +123,101 @@ async function handle(conn: Deno.Conn) {
 
       ws_set.add(ws);
 
-      ws.addEventListener("open", () => {
-        ws.addEventListener("message", async (e) => {
+      ws.onopen = () => {
+        ws.onmessage = async (e: MessageEvent) => {
           if (typeof e.data === "string") {
             const split_data = e.data.split("::");
             const command = split_data.shift();
 
-            switch (command) {
-              case "register":
-                var potential_uuid = split_data.shift();
+            try {
+              switch (command) {
+                case "register":
+                  var potential_uuid = split_data.shift();
 
-                if (v4.validate(potential_uuid || "")) {
-                  const query = await id_collection.findOne({
-                    uuid: potential_uuid,
-                  });
+                  if (v4.validate(potential_uuid || "")) {
+                    const query = await id_collection.findOne({
+                      uuid: potential_uuid,
+                    });
 
-                  if (query) {
-                    ws.send(
-                      `register::${query.uuid}::${query.last_update.toISOString()}`,
-                    );
-                    break;
-                  }
-                }
-
-                const register_date = new Date();
-                const register_uuid = crypto.randomUUID();
-
-                await id_collection.insertOne({
-                  last_update: register_date,
-                  uuid: register_uuid,
-                });
-
-                ws.send(
-                  `register::${register_uuid}::${register_date.toISOString()}`,
-                );
-                break;
-              case "place":
-                var potential_uuid = split_data.shift();
-
-                if (v4.validate(potential_uuid || "")) {
-                  const update = new Date();
-                  const query = await id_collection.findOne({
-                    uuid: potential_uuid,
-                  });
-                  const x = split_data.shift();
-                  const y = split_data.shift();
-                  const color = split_data.shift();
-
-                  if (
-                    query &&
-                    (update.getTime() - query.last_update.getTime()) >
-                      300000 &&
-                    check_int(x) && check_int(y) && check_int(color)
-                  ) {
-                    const x_number = parseInt(x || "");
-                    const y_number = parseInt(y || "");
-                    const color_number = parseInt(color || "");
-
-                    if (
-                      x_number < 2000 && x_number >= 0 && y_number < 2000 &&
-                      y_number >= 0 && color_number < 32 && color_number >= 0
-                    ) {
-                      await id_collection.updateOne({
-                        uuid: potential_uuid,
-                      }, {
-                        $set: { last_update: update },
-                      });
-
-                      change_pixel(x_number, y_number, color_number);
-
+                    if (query) {
                       ws.send(
-                        `place::${update}::${x_number}::${y_number}::${color_number}`,
+                        `register::${query.uuid}::${query.last_update.toISOString()}`,
                       );
                       break;
                     }
                   }
-                }
 
-                ws.send(`place`);
-                break;
+                  const register_date = new Date();
+                  const register_uuid = crypto.randomUUID();
+
+                  await id_collection.insertOne({
+                    last_update: register_date,
+                    uuid: register_uuid,
+                  });
+
+                  ws.send(
+                    `register::${register_uuid}::${register_date.toISOString()}`,
+                  );
+                  break;
+                case "place":
+                  var potential_uuid = split_data.shift();
+
+                  if (v4.validate(potential_uuid || "")) {
+                    const update = new Date();
+                    const query = await id_collection.findOne({
+                      uuid: potential_uuid,
+                    });
+                    const x = split_data.shift();
+                    const y = split_data.shift();
+                    const color = split_data.shift();
+
+                    if (
+                      query &&
+                      (update.getTime() - query.last_update.getTime()) >
+                        300000 &&
+                      check_int(x) && check_int(y) && check_int(color)
+                    ) {
+                      const x_number = parseInt(x || "");
+                      const y_number = parseInt(y || "");
+                      const color_number = parseInt(color || "");
+
+                      if (
+                        x_number < 2000 && x_number >= 0 && y_number < 2000 &&
+                        y_number >= 0 && color_number < 32 && color_number >= 0
+                      ) {
+                        await id_collection.updateOne({
+                          uuid: potential_uuid,
+                        }, {
+                          $set: { last_update: update },
+                        });
+
+                        change_pixel(x_number, y_number, color_number);
+
+                        ws.send(
+                          `place::${update}::${x_number}::${y_number}::${color_number}`,
+                        );
+                        break;
+                      }
+                    }
+                  }
+
+                  ws.send(`place`);
+                  break;
+              }
+            } catch (error) {
+              console.error(error);
             }
           }
-        });
-      });
+        };
+      };
 
       const end = () => {
         ws.close();
         ws_set.delete(ws);
       };
 
-      ws.addEventListener("close", end);
-      ws.addEventListener("error", end);
+      ws.onclose = end;
+      ws.onerror = end;
 
       respondWith(response).catch(
         console.error,
@@ -241,7 +250,7 @@ async function handle(conn: Deno.Conn) {
 
           var body = compress(
             request,
-            await current_image.encode(),
+            current_encoded_image,
             headers,
           );
 
@@ -251,6 +260,11 @@ async function handle(conn: Deno.Conn) {
               status,
             }),
           ).catch(
+            console.error,
+          );
+          break;
+        default:
+          respondWith(new Response(null, { status: 404 })).catch(
             console.error,
           );
       }
