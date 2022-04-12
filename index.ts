@@ -77,6 +77,7 @@ const image_file_reader = (await bucket.openDownloadStream(image_file_id))
   .getReader();
 let image_file_data = [];
 let data;
+let pixel_changes = "";
 
 while (data = (await image_file_reader.read()).value) {
   image_file_data.push([...data]);
@@ -96,7 +97,17 @@ const change_pixel = (x: number, y: number, color: number) => {
   current_image.bitmap[x * 4 + y * 8000] = colors[color][0];
   current_image.bitmap[x * 4 + y * 8000 + 1] = colors[color][1];
   current_image.bitmap[x * 4 + y * 8000 + 2] = colors[color][2];
+
+  pixel_changes += `::${x}::${y}::${color}`;
 };
+
+setInterval(() => {
+  for (const ws of ws_set) {
+    (ws as WebSocket).send("other_place" + pixel_changes);
+  }
+
+  pixel_changes = "";
+}, 1000);
 
 async function handle(conn: Deno.Conn) {
   for await (const { request, respondWith } of Deno.serveHttp(conn)) {

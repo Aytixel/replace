@@ -606,6 +606,9 @@
                                     reset_timer()
                                 }
                                 break
+                            case "other_place":
+                                while (split_data.length >= 3) change_pixel(+split_data.shift(), +split_data.shift(), +split_data.shift())
+                                break
                         }
                     }
                 })
