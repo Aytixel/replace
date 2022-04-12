@@ -424,6 +424,7 @@
             let is_placing = false
             
             image_canvas_context.imageSmoothingEnabled = false
+            cursor_canvas_context.imageSmoothingEnabled = false
 
             const clamp = (min, x, max) => Math.max(Math.min(x, max), min)
 
@@ -448,6 +449,8 @@
             }, 1000)
 
             // place bar
+            place_bar_element.addEventListener("mousedown", e => e.stopPropagation())
+            place_bar_element.addEventListener("touchstart", e => e.stopPropagation(), { passive: true })
             cancel_place_element.addEventListener("click", () => place_bar_element.classList.remove("focus"))
 
             for (const color_element of color_elements) {
@@ -495,9 +498,6 @@
 
             // change position
             const start = e => {
-                // prevent move from starting on the place bar
-                if (e.path.some(element => element == place_bar_element)) return
-
                 e.preventDefault()
 
                 if (e.changedTouches) e = e.changedTouches[0]
