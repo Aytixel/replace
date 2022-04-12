@@ -103,7 +103,19 @@ const change_pixel = (x: number, y: number, color: number) => {
 };
 
 setInterval(async () => {
-  current_encoded_image = await current_image.encode();
+  const upstream = await bucket.openUploadStream("current");
+  const writer = upstream.getWriter();
+
+  writer.write(current_encoded_image = await current_image.encode());
+
+  await writer.close();
+
+  const files = (await bucket.find({ filename: "current" }).toArray()).sort((
+    a,
+    b,
+  ) => b.uploadDate.getTime() - a.uploadDate.getTime());
+
+  for (let i = 1; i < files.length; i++) bucket.delete(files[i]._id);
 
   for (const ws of ws_set) {
     if ((ws as WebSocket).readyState === WebSocket.OPEN) {
