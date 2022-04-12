@@ -12,7 +12,7 @@
             :root {
                 --color1: #fff;
                 --color2: #1c1b1a;
-                --color3: #9c9894;
+                --color3: #c7c1bb;
             }
 
             * {
@@ -172,6 +172,161 @@
             #timer.place-mode #place-mode {
                 display: block;
             }
+            
+            /*
+
+                Place Bar
+
+            */
+            #place-bar {
+                position: fixed;
+                bottom: 0;
+                
+                width: 100vw;
+
+                padding: 1vh 0;
+
+                background-color: var(--color1);
+
+                box-shadow: 0.1vh 0.1vh 0.4vh -0.2vh var(--color2);
+            }
+
+            #colors {
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+
+                margin-top: 1vh;
+
+                left: 50%;
+
+                width: 98vw;
+
+                transform: translateX(-50%);
+            }
+
+            #colors .color {
+                margin: 0.15vh;
+
+                height: 3vh;
+                width: 5vh;
+
+                border-radius: 0.3vh;
+
+                border: solid 0.15vh var(--color3);
+                
+                transition: 0.2s border-color ease-in-out, 0.2s box-shadow ease-in-out;
+            }
+
+            #colors .color.focus, #colors .color:hover {
+                border-color: var(--color1);
+
+                box-shadow: 0 0 0 0.15vh var(--color2);
+            }
+
+            #burgandy {background-color: #6d001a;}
+            #dark-red {background-color: #be0039;}
+            #red {background-color: #ff4500;}
+            #orange {background-color: #ffa800;}
+            #yellow {background-color: #ffd635;}
+            #pale-yellow {background-color: #fff8b8;}
+            #dark-green {background-color: #00a368;}
+            #green {background-color: #00cc78;}
+            #light-green {background-color: #7eed56;}
+            #dark-teal {background-color: #00756f;}
+            #teal {background-color: #009eaa;}
+            #light-teal {background-color: #00ccc0;}
+            #dark-blue {background-color: #2450a4;}
+            #blue {background-color: #3690ea;}
+            #light-blue {background-color: #51e9f4;}
+            #indigo {background-color: #493ac1;}
+            #periwinkle {background-color: #6a5cff;}
+            #lavender {background-color: #94b3ff;}
+            #dark-purple {background-color: #811e9f;}
+            #purple {background-color: #b44ac0;}
+            #pale-purple {background-color: #e4abff;}
+            #magenta {background-color: #de107f;}
+            #pink {background-color: #ff3881;}
+            #light-pink {background-color: #ff99aa;}
+            #dark-brown {background-color: #6d482f;}
+            #brown {background-color: #9c6926;}
+            #beige {background-color: #ffb470;}
+            #black {background-color: #000000;}
+            #dark-gray {background-color: #515252;}
+            #gray {background-color: #898d90;}
+            #light-gray {background-color: #d4d7d9;}
+            #white {background-color: #ffffff;}
+
+            #place-button-container {
+                display: flex;
+                justify-content: space-evenly;
+                flex-wrap: wrap;
+
+                margin-top: 2vh;
+
+                left: 50%;
+
+                width: 80vw;
+                min-width: 25.2vh;
+
+                transform: translateX(-50%);
+            }
+
+            #cancel-place, #valid-place {
+                display: inline-block;
+
+                margin: 0.5vh;
+
+                height: 3vh;
+                width: 25vh;
+
+                border: solid 0.1vh var(--color3);
+
+                border-radius: 1.5vh;
+
+                flex-shrink: 0;
+
+                transition: 0.2s border-color ease-in-out;
+            }
+
+            #cancel-place:hover, #valid-place:hover {
+                border: solid 0.1vh var(--color2);
+            }
+
+            #cancel-place::before, #valid-place::before, #cancel-place::after, #valid-place::after {
+                display: block;
+
+                position: absolute;
+                top: 50%;
+                left: 50%;
+
+                height: 0.2vh;
+                width: 2vh;
+
+                content: "";
+
+                background-color: var(--color2);
+            }
+
+            #cancel-place::before {
+                transform: translate(-50%, -50%) rotate(45deg);
+            }
+            
+            #cancel-place::after {
+                transform: translate(-50%, -50%) rotate(-45deg);
+            }
+
+            #valid-place::before {
+                top: 50%;
+
+                width: 1vh;
+
+                transform: translate(-85%, 200%) rotate(45deg);
+            }
+            
+            #valid-place::after {
+                transform: translate(-15%, -50%) rotate(-45deg);
+            }
         </style>
     </head>
 
@@ -192,6 +347,48 @@
         <div id="zoom">
             <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 30 30" style=" fill:#1c1b1a;"><path d="M 13 3 C 7.4889971 3 3 7.4889971 3 13 C 3 18.511003 7.4889971 23 13 23 C 15.396508 23 17.597385 22.148986 19.322266 20.736328 L 25.292969 26.707031 A 1.0001 1.0001 0 1 0 26.707031 25.292969 L 20.736328 19.322266 C 22.148986 17.597385 23 15.396508 23 13 C 23 7.4889971 18.511003 3 13 3 z M 13 5 C 17.430123 5 21 8.5698774 21 13 C 21 17.430123 17.430123 21 13 21 C 8.5698774 21 5 17.430123 5 13 C 5 8.5698774 8.5698774 5 13 5 z"></path></svg>
             <div id="zoom-level">1x</div>
+        </div>
+
+        <div id="place-bar">
+            <div id="colors">
+                <div id="burgandy" class="color"></div>
+                <div id="dark-red" class="color"></div>
+                <div id="red" class="color"></div>
+                <div id="orange" class="color"></div>
+                <div id="yellow" class="color"></div>
+                <div id="pale-yellow" class="color"></div>
+                <div id="dark-green" class="color"></div>
+                <div id="green" class="color"></div>
+                <div id="light-green" class="color"></div>
+                <div id="dark-teal" class="color"></div>
+                <div id="teal" class="color"></div>
+                <div id="light-teal" class="color"></div>
+                <div id="dark-blue" class="color"></div>
+                <div id="blue" class="color"></div>
+                <div id="light-blue" class="color"></div>
+                <div id="indigo" class="color"></div>
+                <div id="periwinkle" class="color"></div>
+                <div id="lavender" class="color"></div>
+                <div id="dark-purple" class="color"></div>
+                <div id="purple" class="color"></div>
+                <div id="pale-purple" class="color"></div>
+                <div id="magenta" class="color"></div>
+                <div id="pink" class="color"></div>
+                <div id="light-pink" class="color"></div>
+                <div id="dark-brown" class="color"></div>
+                <div id="brown" class="color"></div>
+                <div id="beige" class="color"></div>
+                <div id="black" class="color"></div>
+                <div id="dark-gray" class="color"></div>
+                <div id="gray" class="color"></div>
+                <div id="light-gray" class="color"></div>
+                <div id="white" class="color"></div>
+            </div>
+
+            <div id="place-button-container">
+                <div id="cancel-place"></div>
+                <div id="valid-place"></div>
+            </div>
         </div>
 
         <script type="application/javascript">
@@ -344,12 +541,8 @@
                             case "register":
                                 localStorage.setItem("uuid", split_data.shift())
 
-                                last_update = new Date(split_data)
-
-                                console.log(localStorage.getItem("uuid"), last_update)
-
                                 // setup the timer
-                                timer = 300 - (new Date() - last_update)
+                                timer = 300 - (new Date() - (last_update = new Date(split_data)))
 
                                 if (timer < 1)  timer_element.classList.toggle("place-mode", true)
 
