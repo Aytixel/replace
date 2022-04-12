@@ -18,7 +18,7 @@ function compress(
     headers["vary"] = "Accept-Encoding";
     headers["content-encoding"] = "deflate";
 
-    return deflate(data, undefined);
+    return deflate(data);
   }
   if (/\bbr\b/.test(acceptEncoding)) {
     headers["vary"] = "Accept-Encoding";
