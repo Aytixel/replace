@@ -47,17 +47,17 @@
                 top: 2vh;
                 left: 50%;
 
-                padding: 0 1.5vh;
+                padding: 0 3vh;
 
-                height: 2.5vh;
+                height: 3vh;
 
                 background-color: var(--color1);
 
-                border-radius: 1.25vh;
+                border-radius: 1.5vh;
 
-                line-height: 2.5vh;
+                line-height: 3vh;
 
-                font-size: 1.5vh;
+                font-size: 1.75vh;
 
                 color: var(--color2);
 
@@ -100,41 +100,77 @@
             
             /*
 
-                Zoom
+                Timer & Zoom
 
             */
-            #zoom {
+            #timer, #zoom {
                 position: fixed;
-                right: 2vh;
+                left: 50%;
                 bottom: 2vh;
 
                 height: 3vh;
-                width: 7vh;
+                width: 11vh;
+
+                padding: 0 3vh;
 
                 background-color: var(--color1);
 
                 border-radius: 1.5vh;
 
                 box-shadow: 0.1vh 0.1vh 0.4vh -0.2vh var(--color2);
+
+                transform: translateX(-50%);
             }
 
-            #zoom svg {
+            #zoom {
+                position: fixed;
+                left: auto;
+                right: 2vh;
+
+                width: 7vh;
+
+                padding: 0;
+            }
+
+            #timer svg, #zoom svg {
                 margin: 0.25vh;
 
                 height: 2.5vh;
                 width: 2.5vh;
             }
 
-            #zoom-level {
-                position: absolute;
-                top: 0;
-                right: 1vh;
+            #time, #zoom-level {
+                float: right;
 
                 line-height: 3vh;
 
                 font-size: 1.75vh;
 
                 color: var(--color2);
+            }
+
+            #zoom-level {
+                right: 1vh;
+            }
+
+            #place-mode {
+                display: none;
+
+                line-height: 3vh;
+
+                font-size: 1.75vh;
+            }
+
+            #timer.place-mode {
+                width: auto;
+            }
+
+            #timer.place-mode :not(#place-mode) {
+                display: none;
+            }
+
+            #timer.place-mode #place-mode {
+                display: block;
             }
         </style>
     </head>
@@ -147,6 +183,12 @@
         
         <div id="position">(1000, 1000)</div>
 
+        <div id="timer">
+            <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="50" height="50" viewBox="0 0 50 50" style=" fill:#1c1b1a;"><path d="M 25 2 C 12.309295 2 2 12.309295 2 25 C 2 37.690705 12.309295 48 25 48 C 37.690705 48 48 37.690705 48 25 C 48 12.309295 37.690705 2 25 2 z M 25 4 C 36.609824 4 46 13.390176 46 25 C 46 36.609824 36.609824 46 25 46 C 13.390176 46 4 36.609824 4 25 C 4 13.390176 13.390176 4 25 4 z M 24.984375 6.9863281 A 1.0001 1.0001 0 0 0 24 8 L 24 22.173828 A 3 3 0 0 0 22 25 A 3 3 0 0 0 22.294922 26.291016 L 16.292969 32.292969 A 1.0001 1.0001 0 1 0 17.707031 33.707031 L 23.708984 27.705078 A 3 3 0 0 0 25 28 A 3 3 0 0 0 28 25 A 3 3 0 0 0 26 22.175781 L 26 8 A 1.0001 1.0001 0 0 0 24.984375 6.9863281 z"></path></svg>
+            <div id="time">00:05:00</div>
+            <div id="place-mode">Place a tile</div>
+        </div>
+
         <div id="zoom">
             <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 30 30" style=" fill:#1c1b1a;"><path d="M 13 3 C 7.4889971 3 3 7.4889971 3 13 C 3 18.511003 7.4889971 23 13 23 C 15.396508 23 17.597385 22.148986 19.322266 20.736328 L 25.292969 26.707031 A 1.0001 1.0001 0 1 0 26.707031 25.292969 L 20.736328 19.322266 C 22.148986 17.597385 23 15.396508 23 13 C 23 7.4889971 18.511003 3 13 3 z M 13 5 C 17.430123 5 21 8.5698774 21 13 C 21 17.430123 17.430123 21 13 21 C 8.5698774 21 5 17.430123 5 13 C 5 8.5698774 8.5698774 5 13 5 z"></path></svg>
             <div id="zoom-level">1x</div>
@@ -158,6 +200,8 @@
             const cursor_canvas_element = document.getElementsByTagName("canvas")[1]
             const position_element = document.getElementById("position")
             const zoom_level_element = document.getElementById("zoom-level")
+            const timer_element = document.getElementById("timer")
+            const time_element = document.getElementById("time")
             const image_canvas_context = image_canvas_element.getContext('2d')
             const cursor_canvas_context = cursor_canvas_element.getContext('2d')
             let zoom_level = 1;
@@ -166,6 +210,7 @@
             const canvas_offset = { x: canvas_half_heigth, y: canvas_half_heigth }
             const last_position = { x: 1000, y: 1000 }
             const last_screen_position = { x: 0, y: 0 }
+            let timer = 300;
             
             image_canvas_context.imageSmoothingEnabled = false
 
@@ -174,6 +219,24 @@
                 image_canvas_context.fillStyle = color
                 image_canvas_context.fillRect(x, y, 1, 1)
             }
+
+            // timer
+            const complete_number = n => (n.toString().length % 2 ? "0" : "") + n
+            const display_time = () => time_element.textContent = `${complete_number(Math.floor(timer / 3600))}:${complete_number(Math.floor(timer / 60 % 60))}:${complete_number(timer % 60)}`
+            const reset_timer = () => {
+                timer = 300
+
+                timer_element.classList.toggle("place-mode", false)
+            }
+
+            setInterval(() => {
+                display_time()
+
+                if (timer > 0) timer--
+                else timer_element.classList.toggle("place-mode", true)
+            }, 1000)
+
+            // zoom
             const change_cursor = (x, y) => {
                 cursor_canvas_context.clearRect(0, 0, 12000, 12000)
                 cursor_canvas_context.fillStyle = "#9c9894"
@@ -195,7 +258,6 @@
                 change_cursor(last_position.x, last_position.y)
             }
 
-            // zoom
             window.addEventListener("wheel", e => {
                 zoom_level -= Math.sign(e.deltaY)
                 zoom_level = clamp(1, zoom_level, 10)
@@ -285,6 +347,12 @@
                                 last_update = new Date(split_data)
 
                                 console.log(localStorage.getItem("uuid"), last_update)
+
+                                // setup the timer
+                                timer = 300 - (new Date() - last_update)
+
+                                if (timer < 1)  timer_element.classList.toggle("place-mode", true)
+
                                 break
                         }
                     }
