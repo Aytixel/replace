@@ -15,6 +15,7 @@
                 --color3: #c7c1bb;
                 --cursor-x-offset: 1000;
                 --cursor-y-offset: 1000;
+                --image-scale: 0;
             }
 
             * {
@@ -86,16 +87,14 @@
 
             #image {
                 position: absolute;
-
-                height: 80vh;
-                width: 80vh;
-
+                
                 image-rendering: pixelated;
 
                 background-image: url("/current.png");
                 background-size: contain;
 
                 transform-origin: top left;
+                transform: scale(var(--image-scale));
             }
 
             #cursor {
@@ -445,7 +444,7 @@
             const colors = ["#6d001a", "#be0039", "#ff4500", "#ffa800", "#ffd635", "#fff8b8", "#00a368", "#00cc78", "#7eed56", "#00756f", "#009eaa", "#00ccc0", "#2450a4", "#3690ea", "#51e9f4", "#493ac1", "#6a5cff", "#94b3ff", "#811e9f", "#b44ac0", "#e4abff", "#de107f", "#ff3881", "#ff99aa", "#6d482f", "#9c6926", "#ffb470", "#000000", "#515252", "#898d90", "#d4d7d9", "#ffffff"]
             const drawing_element = document.getElementById("drawing")
             const image_canvas_element = document.getElementById("image")
-            const cursor_canvas_element = document.getElementById("cursor")
+            const cursor_element = document.getElementById("cursor")
             const position_element = document.getElementById("position")
             const timer_element = document.getElementById("timer")
             const time_element = document.getElementById("time")
@@ -457,8 +456,7 @@
             const image_canvas_context = image_canvas_element.getContext('2d')
             let zoom_level = 1
             const zoom_levels = [1, 2.5, 5, 7.5, 10, 15, 20, 30, 40, 60]
-            const canvas_half_heigth = image_canvas_element.clientHeight / 2
-            const canvas_offset = { x: canvas_half_heigth, y: canvas_half_heigth }
+            const canvas_offset = { x: 0, y: 0 }
             const last_position = { x: 1000, y: 1000 }
             const last_screen_position = { x: 0, y: 0 }
             let timer = 300
@@ -503,11 +501,11 @@
 
             // zoom
             const change_cursor = (x, y) => {
-                cursor_canvas_element.style.setProperty("--cursor-x-offset", last_position.x)
-                cursor_canvas_element.style.setProperty("--cursor-y-offset", last_position.y)
+                cursor_element.style.setProperty("--cursor-x-offset", last_position.x)
+                cursor_element.style.setProperty("--cursor-y-offset", last_position.y)
             }
             const update_position = () => {
-                const canvas_height = image_canvas_element.clientHeight * zoom_levels[zoom_level - 1]
+                const canvas_height = image_canvas_element.getClientRects()[0].height
 
                 canvas_offset.x = clamp(0, (1999 - last_position.x) / 2000 * canvas_height, canvas_height * 0.9995)
                 canvas_offset.y = clamp(0, (1999 - last_position.y) / 2000 * canvas_height, canvas_height * 0.9995)
@@ -523,8 +521,8 @@
                     zoom_level = clamp(1, zoom_level, 10)
                     
                     zoom_level_element.textContent = zoom_level + "x"
-                    image_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
-                    cursor_canvas_element.style.transform = `scale(0.0125) scale(${zoom_levels[zoom_level - 1]}) translate(calc(3.2vh * var(--cursor-x-offset)), calc(3.2vh * var(--cursor-y-offset)))`
+                    image_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]}) scale(var(--image-scale))`
+                    cursor_element.style.transform = `scale(0.0125) scale(${zoom_levels[zoom_level - 1]}) translate(calc(3.2vh * var(--cursor-x-offset)), calc(3.2vh * var(--cursor-y-offset)))`
 
                     update_position()
                 })
@@ -559,7 +557,7 @@
                 last_screen_position.y = e.screenY
                 
                 requestAnimationFrame(() => {
-                    const canvas_height = image_canvas_element.clientHeight * zoom_levels[zoom_level - 1]
+                    const canvas_height = image_canvas_element.getClientRects()[0].height
 
                     canvas_offset.x = clamp(0, canvas_offset.x, canvas_height * 0.9995)
                     canvas_offset.y = clamp(0, canvas_offset.y, canvas_height * 0.9995)
@@ -585,12 +583,18 @@
                 window.removeEventListener('touchcancel', end)
                 window.removeEventListener('touchleave', end)
             }
+            const update_image_scale = () => {
+                image_canvas_element.style.setProperty("--image-scale", drawing_element.getClientRects()[0].height / 2000)
 
-            window.addEventListener("resize", () => requestAnimationFrame(update_position))
+                update_position()
+            }
+
+            update_image_scale()
+            change_cursor(1000, 1000)
+
+            window.addEventListener("resize", () => requestAnimationFrame(update_image_scale))
             window.addEventListener("mousedown", start)
             window.addEventListener("touchstart", start, { passive: true })
-
-            change_cursor(1000, 1000)
             
             const ws = new WebSocket("ws://replace.tk")
             let last_update = null
