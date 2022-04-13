@@ -13,6 +13,8 @@
                 --color1: #fff;
                 --color2: #1c1b1a;
                 --color3: #c7c1bb;
+                --cursor-x-offset: 1000;
+                --cursor-y-offset: 1000;
             }
 
             * {
@@ -82,7 +84,7 @@
                 transform: translate(-50%, -50%);
             }
 
-            #drawing canvas {
+            #image {
                 position: absolute;
 
                 height: 80vh;
@@ -90,12 +92,52 @@
 
                 image-rendering: pixelated;
 
+                background-image: url("/current.png");
+                background-size: contain;
+
                 transform-origin: top left;
             }
 
-            #drawing #image {
-                background-image: url("/current.png");
-                background-size: contain;
+            #cursor {
+                position: absolute;
+                top: 0;
+                left: 0;
+
+                height: 3.2vh; 
+                width: 3.2vh;
+
+                transform-origin: top left;
+                transform: scale(0.0125) translate(calc(3.2vh * var(--cursor-x-offset)), calc(3.2vh * var(--cursor-y-offset)));
+            }
+
+            #cursor::before, #cursor::after {
+                display: block;
+
+                position: absolute;
+                top: 50%;
+                left: 50%;
+
+                height: 5.333vh;
+                width: 5.333vh;
+
+                content: "";
+
+                background-color:#9c9894;
+
+                transform: translate(-50%, -50%);
+            }
+
+            #cursor::before {
+                clip-path: polygon(0% 0%, 40% 0%, 40% 20%, 20% 20%, 20% 40%, 0% 40%, 0% 60%, 20% 60%, 20% 80%, 40% 80%, 40% 100%, 60% 100%, 60% 80%, 80% 80%, 80% 60%, 100% 60%, 100% 40%, 80% 40%, 80% 20%, 60% 20%, 60% 0%, 100% 0%, 100% 100%, 0% 100%);
+            }
+
+            #cursor::after {
+                height: 4.266vh;
+                width: 4.266vh;
+
+                background-color: #5c5956;
+
+                clip-path: polygon(0% 0%, 37.5% 0%, 37.5% 12.5%, 12.5% 12.5%, 12.5% 37.5%, 0% 37.5%, 0% 62.5%, 12.5% 62.5%, 12.5% 87.5%, 37.5% 87.5%, 37.5% 100%, 62.5% 100%, 62.5% 87.5%, 87.5% 87.5%, 87.5% 62.5%, 100% 62.5%, 100% 37.5%, 87.5% 37.5%, 87.5% 12.5%, 62.5% 12.5%, 62.5% 0%, 100% 0%, 100% 100%, 0% 100%);
             }
             
             /*
@@ -341,7 +383,7 @@
     <body>
         <div id="drawing">
             <canvas id="image" width="2000" height="2000">Canvas disabled</canvas>
-            <canvas id="cursor" width="12000" height="12000">Canvas disabled</canvas>
+            <div id="cursor"></div>
         </div>
         
         <div id="position">(1000, 1000)</div>
@@ -413,7 +455,6 @@
             const valid_place_element = document.getElementById("valid-place")
             const color_elements = place_bar_element.getElementsByClassName("color") 
             const image_canvas_context = image_canvas_element.getContext('2d')
-            const cursor_canvas_context = cursor_canvas_element.getContext('2d')
             let zoom_level = 1
             const zoom_levels = [1, 2.5, 5, 7.5, 10, 15, 20, 30, 40, 60]
             const canvas_half_heigth = image_canvas_element.clientHeight / 2
@@ -424,7 +465,6 @@
             let is_placing = false
             
             image_canvas_context.imageSmoothingEnabled = false
-            cursor_canvas_context.imageSmoothingEnabled = false
 
             const clamp = (min, x, max) => Math.max(Math.min(x, max), min)
 
@@ -463,14 +503,8 @@
 
             // zoom
             const change_cursor = (x, y) => {
-                cursor_canvas_context.clearRect(0, 0, 12000, 12000)
-                cursor_canvas_context.fillStyle = "#9c9894"
-                cursor_canvas_context.fillRect(x * 6 - 2, y * 6 - 2, 10, 10)
-                cursor_canvas_context.fillStyle = "#5c5956"
-                cursor_canvas_context.fillRect(x * 6 - 1, y * 6 - 1, 8, 8)
-                cursor_canvas_context.clearRect(x * 6, y * 6, 6, 6)
-                cursor_canvas_context.clearRect(x * 6 - 2, y * 6 + 2, 10, 2)
-                cursor_canvas_context.clearRect(x * 6 + 2, y * 6 - 2, 2, 10)
+                cursor_canvas_element.style.setProperty("--cursor-x-offset", last_position.x)
+                cursor_canvas_element.style.setProperty("--cursor-y-offset", last_position.y)
             }
             const update_position = () => {
                 const canvas_height = image_canvas_element.clientHeight * zoom_levels[zoom_level - 1]
@@ -490,7 +524,7 @@
                     
                     zoom_level_element.textContent = zoom_level + "x"
                     image_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
-                    cursor_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]})`
+                    cursor_canvas_element.style.transform = `scale(0.0125) scale(${zoom_levels[zoom_level - 1]}) translate(calc(3.2vh * var(--cursor-x-offset)), calc(3.2vh * var(--cursor-y-offset)))`
 
                     update_position()
                 })
