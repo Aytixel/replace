@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
         <meta name="author" content="Aytixel">
         <meta name="description" content="The concept, just the same as r/place">
         <title>re/place</title>
@@ -30,6 +30,8 @@
 
             html {
                 height: 100%;
+
+                overflow: hidden;
             }
 
             body {
@@ -459,6 +461,7 @@
             const canvas_offset = { x: 0, y: 0 }
             const last_position = { x: 1000, y: 1000 }
             const last_screen_position = { x: 0, y: 0 }
+            let last_touch_zoom_distance = 0
             let timer = 300
             let is_placing = false
             
@@ -475,7 +478,7 @@
                 timer_element.classList.remove("place-mode")
             }
 
-            timer_element.addEventListener("click", e => {
+            timer_element.addEventListener("click", () => {
                 if (timer < 1) place_bar_element.classList.add("focus")
             })
 
@@ -530,9 +533,14 @@
 
             // change position
             const start = e => {
-                e.preventDefault()
+                if (e.cancelable) e.preventDefault()
 
-                if (e.changedTouches) e = e.changedTouches[0]
+                if (e.touches) {
+                    if (e.touches.length == 2)last_touch_zoom_distance = 0
+                    if (e.touches.length > 1) return
+                    
+                    e = e.touches[0]
+                }
 
                 last_screen_position.x = e.screenX
                 last_screen_position.y = e.screenY
@@ -546,9 +554,31 @@
                 window.addEventListener('touchleave', end)
             }
             const move = e => {
-                e.preventDefault()
+                if (e.cancelable) e.preventDefault()
+                if (e.touches) {
+                    if (e.touches.length == 2) { // touch zoom gestion
+                        const x = e.touches[0].screenX - e.touches[1].screenX
+                        const y = e.touches[0].screenY - e.touches[1].screenY
+                        const distance = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / 50)
 
-                if (e.changedTouches) e = e.changedTouches[0]
+                        if (last_touch_zoom_distance != distance) {
+                            zoom_level -= Math.sign(last_touch_zoom_distance - distance)
+                            zoom_level = clamp(1, zoom_level, 10)
+                            
+                            zoom_level_element.textContent = zoom_level + "x"
+                            image_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]}) scale(var(--image-scale))`
+                            cursor_element.style.transform = `scale(0.0125) scale(${zoom_levels[zoom_level - 1]}) translate(calc(3.2vh * var(--cursor-x-offset)), calc(3.2vh * var(--cursor-y-offset)))`
+
+                            update_position()
+
+                            last_touch_zoom_distance = distance
+                        }
+
+                        return
+                    } else if (e.touches.length > 2) return
+                    
+                    e = e.touches[0]
+                }
                 
                 canvas_offset.x += (e.screenX - last_screen_position.x)
                 canvas_offset.y += (e.screenY - last_screen_position.y)
@@ -573,7 +603,8 @@
                 })
             }
             const end = e => {
-                e.preventDefault()
+                if (e.cancelable) e.preventDefault()
+                if (e.touches && e.touches.length > 1) return
 
                 window.removeEventListener('mousemove', move)
                 window.removeEventListener('touchmove', move)
@@ -596,7 +627,7 @@
             window.addEventListener("mousedown", start)
             window.addEventListener("touchstart", start, { passive: true })
             
-            const ws = new WebSocket("ws://replace.tk")
+            const ws = new WebSocket("ws://" + document.location.host)
             let last_update = null
 
             const change_pixel = (x, y, color) => {
