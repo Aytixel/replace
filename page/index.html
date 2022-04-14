@@ -554,48 +554,46 @@
             }
             const move = e => {
                 if (e.cancelable) e.preventDefault()
-                if (e.touches) {
-                    if (e.touches.length == 2) { // touch zoom gestion
-                        const x = e.touches[0].screenX - e.touches[1].screenX
-                        const y = e.touches[0].screenY - e.touches[1].screenY
-                        const distance = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / 50)
-
-                        if (last_touch_zoom_distance != distance) {
-                            zoom_level -= Math.sign(last_touch_zoom_distance - distance)
-                            zoom_level = clamp(1, zoom_level, 10)
-                            
-                            zoom_level_element.textContent = zoom_level + "x"
-                            image_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]}) scale(var(--image-scale))`
-                            cursor_element.style.transform = `scale(0.0125) scale(${zoom_levels[zoom_level - 1]}) translate(calc(3.2vh * var(--cursor-x-offset)), calc(3.2vh * var(--cursor-y-offset)))`
-
-                            update_position()
-
-                            last_touch_zoom_distance = distance
-                        }
-
-                        return
-                    } else if (e.touches.length > 2) return
-                    
-                    e = e.touches[0]
-                }
-                
-                canvas_offset.x += (e.screenX - last_screen_position.x)
-                canvas_offset.y += (e.screenY - last_screen_position.y)
-
-                last_screen_position.x = e.screenX
-                last_screen_position.y = e.screenY
                 
                 requestAnimationFrame(() => {
+                    if (e.touches) {
+                        if (e.touches.length == 2) { // touch zoom gestion
+                            const x = e.touches[0].screenX - e.touches[1].screenX
+                            const y = e.touches[0].screenY - e.touches[1].screenY
+                            const distance = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / 50)
+
+                            if (last_touch_zoom_distance != distance) {
+                                zoom_level -= Math.sign(last_touch_zoom_distance - distance)
+                                zoom_level = clamp(1, zoom_level, 10)
+                                
+                                zoom_level_element.textContent = zoom_level + "x"
+                                image_canvas_element.style.transform = `scale(${zoom_levels[zoom_level - 1]}) scale(var(--image-scale))`
+                                cursor_element.style.transform = `scale(0.0125) scale(${zoom_levels[zoom_level - 1]}) translate(calc(3.2vh * var(--cursor-x-offset)), calc(3.2vh * var(--cursor-y-offset)))`
+
+                                update_position()
+
+                                last_touch_zoom_distance = distance
+                            }
+
+                            return
+                        } else if (e.touches.length > 2) return
+                        
+                        e = e.touches[0]
+                    }
+                    
+                    canvas_offset.x += (e.screenX - last_screen_position.x)
+                    canvas_offset.y += (e.screenY - last_screen_position.y)
+                    last_screen_position.x = e.screenX
+                    last_screen_position.y = e.screenY
+
                     const canvas_height = image_canvas_element.getClientRects()[0].height
 
                     canvas_offset.x = clamp(0, canvas_offset.x, canvas_height * 0.9995)
                     canvas_offset.y = clamp(0, canvas_offset.y, canvas_height * 0.9995)
-
                     last_position.x = Math.round(1999 - (canvas_offset.x / canvas_height * 2000))
                     last_position.y = Math.round(1999 - (canvas_offset.y / canvas_height * 2000))
 
                     position_element.textContent = `(${last_position.x}, ${last_position.y})`
-
                     drawing_element.style.transform = `translate(${canvas_offset.x - canvas_height}px, ${canvas_offset.y - canvas_height}px)`
 
                     change_cursor(last_position.x, last_position.y)
