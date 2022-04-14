@@ -534,7 +534,6 @@
             // change position
             const start = e => {
                 if (e.cancelable) e.preventDefault()
-
                 if (e.touches) {
                     if (e.touches.length == 2)last_touch_zoom_distance = 0
                     if (e.touches.length > 1) return
@@ -603,7 +602,6 @@
                 })
             }
             const end = e => {
-                if (e.cancelable) e.preventDefault()
                 if (e.touches && e.touches.length > 1) return
 
                 window.removeEventListener('mousemove', move)
