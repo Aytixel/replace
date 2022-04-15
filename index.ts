@@ -43,7 +43,7 @@ const colors = [
   [0, 163, 104],
   [0, 204, 120],
   [126, 237, 86],
-  [0, 177, 111],
+  [0, 117, 111],
   [0, 158, 170],
   [0, 204, 192],
   [36, 80, 164],
@@ -102,20 +102,8 @@ const change_pixel = (x: number, y: number, color: number) => {
   pixel_changes += `::${x}::${y}::${color}`;
 };
 
+// broadcast pixel changes
 setInterval(async () => {
-  const writer = (await bucket.openUploadStream("current")).getWriter();
-
-  writer.write(current_encoded_image = await current_image.encode());
-
-  await writer.close();
-
-  const files = (await bucket.find({ filename: "current" }).toArray()).sort((
-    a,
-    b,
-  ) => b.uploadDate.getTime() - a.uploadDate.getTime());
-
-  for (let i = 1; i < files.length; i++) bucket.delete(files[i]._id);
-
   for (const ws of ws_set) {
     if ((ws as WebSocket).readyState === WebSocket.OPEN) {
       (ws as WebSocket).send("other_place" + pixel_changes);
