@@ -40,7 +40,7 @@ let pixel_changes = "";
 let db_pixel_changes: number[][] = [];
 const server = Deno.listenTls({
   port: 443,
-  hostname: "replace.tk",
+  hostname: "0.0.0.0",
   certFile: "cert/ssl/cert.pem",
   keyFile: "cert/ssl/privkey.pem",
   alpnProtocols: ["h2", "http/1.1"],
