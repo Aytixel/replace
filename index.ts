@@ -39,7 +39,7 @@ let current_encoded_image = await current_image.encode();
 let pixel_changes = "";
 let db_pixel_changes: number[][] = [];
 const server = Deno.listenTls({
-  port: 80,
+  port: 443,
   hostname: "replace.tk",
   certFile: "cert/ssl/cert.pem",
   keyFile: "cert/ssl/privkey.pem",
