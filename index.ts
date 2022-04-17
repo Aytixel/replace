@@ -38,10 +38,13 @@ const current_image = await download();
 let current_encoded_image = await current_image.encode();
 let pixel_changes = "";
 let db_pixel_changes: number[][] = [];
-const server = Deno.listen({
+const server = Deno.listenTls({
   port: 80,
   hostname: "replace.tk",
-});
+  certFile: "cert/ssl/cert.pem",
+  keyFile: "cert/ssl/privkey.pem",
+  alpnProtocols: ["h2", "http/1.1"],
+} as any);
 const ws_set = new Set();
 
 const check_int = (n: string | undefined) => n && !isNaN(parseInt(n));
