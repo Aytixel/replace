@@ -1,10 +1,7 @@
-import {
-  GridFSBucket,
-  MongoClient,
-} from "https://deno.land/x/mongo@v0.29.3/mod.ts";
-import { Image } from "https://deno.land/x/imagescript@v1.2.12/mod.ts";
-import { compress } from "./compress.ts";
+import { MongoClient } from "https://deno.land/x/mongo@v0.29.3/mod.ts";
 import { v4 } from "https://deno.land/std@0.134.0/uuid/mod.ts";
+import { compress } from "./compress.ts";
+import { colors, download } from "./download.ts";
 
 const client = new MongoClient();
 
@@ -33,60 +30,14 @@ await client.connect({
   },
 });
 
-const colors = [
-  [109, 0, 26],
-  [190, 0, 57],
-  [255, 69, 0],
-  [255, 168, 0],
-  [255, 214, 53],
-  [255, 248, 184],
-  [0, 163, 104],
-  [0, 204, 120],
-  [126, 237, 86],
-  [0, 117, 111],
-  [0, 158, 170],
-  [0, 204, 192],
-  [36, 80, 164],
-  [54, 144, 234],
-  [81, 233, 244],
-  [73, 58, 193],
-  [106, 92, 255],
-  [148, 179, 255],
-  [129, 30, 159],
-  [180, 74, 192],
-  [228, 171, 255],
-  [222, 16, 127],
-  [255, 56, 129],
-  [255, 153, 170],
-  [109, 72, 47],
-  [156, 105, 38],
-  [255, 180, 112],
-  [0, 0, 0],
-  [81, 82, 82],
-  [137, 141, 144],
-  [212, 215, 217],
-  [255, 255, 255],
-];
 const image_database = client.database("image");
 const user_database = client.database("user");
+const pixel_collection = image_database.collection("pixel");
 const id_collection = user_database.collection("id");
-const bucket = new GridFSBucket(image_database);
-const image_file_id =
-  (await bucket.find({ filename: "current" }).toArray())[0]._id;
-const image_file_reader = (await bucket.openDownloadStream(image_file_id))
-  .getReader();
-let image_file_data = [];
-let data;
-
-while (data = (await image_file_reader.read()).value) {
-  image_file_data.push([...data]);
-}
-
-image_file_data = image_file_data.flat();
-
-const current_image = await Image.decode(image_file_data);
-let current_encoded_image = new Uint8Array(image_file_data);
+const current_image = await download();
+let current_encoded_image = await current_image.encode();
 let pixel_changes = "";
+let db_pixel_changes: number[][] = [];
 const server = Deno.listen({
   port: 80,
   hostname: "replace.tk",
@@ -98,7 +49,11 @@ const change_pixel = (x: number, y: number, color: number) => {
   current_image.bitmap[x * 4 + y * 8000] = colors[color][0];
   current_image.bitmap[x * 4 + y * 8000 + 1] = colors[color][1];
   current_image.bitmap[x * 4 + y * 8000 + 2] = colors[color][2];
+  current_image.bitmap[x * 4 + y * 8000 + 3] = 255;
 
+  if (!db_pixel_changes[color]) db_pixel_changes[color] = [];
+
+  db_pixel_changes[color].push(x + y * 2000);
   pixel_changes += `::${x}::${y}::${color}`;
 };
 
@@ -110,7 +65,17 @@ setInterval(async () => {
     }
   }
 
+  for (let i = 0; i < 32; i++) {
+    if (db_pixel_changes[i]) {
+      pixel_collection.updateMany({ _id: { $in: db_pixel_changes[i] } }, {
+        $set: { color: i },
+      }).catch(console.error);
+    }
+  }
+
+  current_encoded_image = await current_image.encode();
   pixel_changes = "";
+  db_pixel_changes = [];
 }, 1000);
 
 async function handle(conn: Deno.Conn) {
@@ -182,7 +147,8 @@ async function handle(conn: Deno.Conn) {
 
                       if (
                         x_number < 2000 && x_number >= 0 && y_number < 2000 &&
-                        y_number >= 0 && color_number < 32 && color_number >= 0
+                        y_number >= 0 && color_number < 32 &&
+                        color_number >= 0
                       ) {
                         await id_collection.updateOne({
                           uuid: potential_uuid,
