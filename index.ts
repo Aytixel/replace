@@ -213,6 +213,24 @@ async function handle(conn: Deno.Conn) {
             console.error,
           );
           break;
+        case "/arc-sw.js":
+          headers["content-type"] = "application/javascript";
+
+          var body = compress(
+            request,
+            await Deno.readFile("./page/arc-sw.js"),
+            headers,
+          );
+
+          respondWith(
+            new Response(body, {
+              headers,
+              status,
+            }),
+          ).catch(
+            console.error,
+          );
+          break;
         case "/current.png":
           headers["content-type"] = "image/png";
 
