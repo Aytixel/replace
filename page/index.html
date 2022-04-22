@@ -665,6 +665,7 @@
                             case "place":
                                 if (split_data.length >= 4) {
                                     last_update = new Date(split_data.shift())
+                                    is_placing = false
 
                                     place_bar_element.classList.remove("focus")
 
