@@ -141,7 +141,7 @@ async function handle(conn: Deno.Conn) {
                     if (
                       query &&
                       (update.getTime() - query.last_update.getTime()) >
-                        300000 &&
+                        60000 &&
                       check_int(x) && check_int(y) && check_int(color)
                     ) {
                       const x_number = parseInt(x || "");
