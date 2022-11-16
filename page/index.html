@@ -474,7 +474,7 @@
             const complete_number = n => (n.toString().length % 2 ? "0" : "") + n
             const display_time = () => time_element.textContent = `${complete_number(Math.floor(timer / 3600))}:${complete_number(Math.floor(timer / 60 % 60))}:${complete_number(timer % 60)}`
             const reset_timer = () => {
-                timer = 300
+                timer = 60
 
                 timer_element.classList.remove("place-mode")
             }
