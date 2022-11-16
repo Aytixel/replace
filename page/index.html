@@ -463,7 +463,7 @@
             const last_position = { x: 1000, y: 1000 }
             const last_screen_position = { x: 0, y: 0 }
             let last_touch_zoom_distance = 0
-            let timer = 300
+            let timer = 60
             let is_placing = false
             
             image_canvas_context.imageSmoothingEnabled = false
@@ -643,7 +643,7 @@
                                 localStorage.setItem("uuid", split_data.shift())
 
                                 // setup the timer
-                                timer = 300 - Math.round((new Date() - (last_update = new Date(split_data.shift()))) / 1000)
+                                timer = 60 - Math.round((new Date() - (last_update = new Date(split_data.shift()))) / 1000)
 
                                 display_time()
 
